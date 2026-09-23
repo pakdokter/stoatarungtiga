@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Bracket live Fun Brewing Battle Tarung Tiga Stoa, Stoa Space Selong.">
+<meta name="theme-color" content="#07110A">
+<title>Tarung Tiga Stoa</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 12'%3E%3Ccircle cx='6' cy='6' r='5' fill='%231F5C22'/%3E%3Ccircle cx='18' cy='6' r='5' fill='%238A6414'/%3E%3Ccircle cx='30' cy='6' r='5' fill='%231F5C22'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700;900&display=swap">
+<style>
+/* Layar peserta: satu tema gelap "panggung" dengan hijau Stoa */
+:root{
+  color-scheme:dark;
+  --bg:#07110A;--card:#0F1D13;--card2:#132519;--line:#223A28;--line2:#2E4C35;
+  --ink:#EEF6EE;--muted:#8EA892;--leaf:#8FD394;--green:#1F5C22;--gold:#E0B85F;--live:#FF5A4F;
+  --win-bg:linear-gradient(90deg,rgba(143,211,148,.22),rgba(143,211,148,.06));
+  --ll-bg:linear-gradient(90deg,rgba(224,184,95,.22),rgba(224,184,95,.05));
+  --font:"Source Sans 3","Source Sans Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-variant-numeric:tabular-nums}
+[hidden]{display:none!important}
+body{min-height:100dvh;overflow-x:hidden}
+.ambient{position:fixed;inset:-20%;pointer-events:none;z-index:0;
+  background:radial-gradient(40% 35% at 18% 12%,rgba(31,92,34,.55),transparent 70%),radial-gradient(35% 30% at 85% 90%,rgba(31,92,34,.35),transparent 70%),radial-gradient(25% 20% at 70% 20%,rgba(224,184,95,.08),transparent 70%);
+  animation:drift 24s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate3d(4%,-3%,0) scale(1.05)}}
+
+.screen{position:relative;z-index:1;display:flex;flex-direction:column;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px) and (min-height:600px){
+  body{height:100dvh;overflow:hidden}
+  .screen{height:100dvh;padding:20px 28px 18px;display:grid;grid-template-rows:auto auto auto minmax(0,1fr)}
+}
+
+/* header */
+.bar{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 20px}
+.eyebrow{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.cups{display:inline-flex;gap:3px}.cups i{width:9px;height:9px;border-radius:50%;background:var(--leaf)}.cups i:nth-child(2){background:var(--gold)}
+h1{margin:2px 0 0;font-weight:900;font-size:clamp(30px,4.2vw,56px);line-height:.95;letter-spacing:-.015em;text-transform:uppercase}
+h1 em{font-style:normal;color:var(--leaf)}
+.now{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:99px;background:rgba(255,90,79,.12);border:1px solid rgba(255,90,79,.4);font-weight:700;font-size:15px;letter-spacing:.02em}
+.now b{color:var(--live);letter-spacing:.14em;font-size:13px}
+.now.done{background:rgba(224,184,95,.12);border-color:rgba(224,184,95,.45)}.now.done b{color:var(--gold)}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--live);animation:ping 1.6s var(--ease) infinite}
+.now.done .dot{background:var(--gold);animation:none}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,90,79,.7)}80%,100%{box-shadow:0 0 0 12px rgba(255,90,79,0)}}
+
+/* langkah babak */
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.step{position:relative;display:flex;flex-direction:column;gap:2px;min-width:140px;padding:8px 14px 12px;border-radius:12px;background:var(--card);border:1px solid var(--line);transition:background .6s var(--ease),border-color .6s var(--ease),opacity .6s}
+.step-k{display:flex;align-items:center;gap:6px;font-weight:800;font-size:15px;text-transform:uppercase;letter-spacing:.06em}
+.step-k svg{width:14px;height:14px;color:var(--leaf)}
+.step-m{font-size:12.5px;color:var(--muted)}
+.step-bar{position:absolute;left:14px;right:14px;bottom:6px;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+.step-bar i{display:block;height:100%;background:var(--leaf);border-radius:3px;transition:width .9s var(--ease)}
+.step.next{opacity:.55}
+.step.live{background:linear-gradient(180deg,rgba(31,92,34,.55),rgba(31,92,34,.25));border-color:var(--leaf)}
+.step.live .step-k::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--live);animation:ping 1.6s var(--ease) infinite}
+.step.live .step-bar i{background:linear-gradient(90deg,var(--leaf),#D8F5DA,var(--leaf));background-size:200% 100%;animation:shimmer 2.2s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+.step-sep{width:18px;height:2px;background:var(--line2);list-style:none}
+
+/* sorotan heat live */
+.spot{display:grid;grid-template-columns:1fr;gap:12px;align-items:stretch}
+@media (min-width:900px){.spot{grid-template-columns:minmax(180px,230px) 1fr}}
+.spot-l{display:flex;flex-direction:column;justify-content:center;gap:4px;view-transition-name:spot-label}
+.spot-lab{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--live)}
+.spot-lab i{width:8px;height:8px;border-radius:50%;background:currentColor;animation:ping 1.6s var(--ease) infinite}
+.spot-lab.is-done{color:var(--gold)}.spot-lab.is-done i{animation:none}
+.spot-lab.is-next{color:var(--muted)}.spot-lab.is-next i{animation:none}
+.spot-t{font-size:clamp(34px,4vw,54px);font-weight:900;line-height:.95;letter-spacing:-.01em}
+.spot-s{color:var(--muted);font-size:15px}
+.spot-cards{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:640px){.pc{min-height:118px}.spot-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.spot-cards.n2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.pc{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:2px;min-height:96px;padding:14px 16px;border-radius:14px;background:var(--card2);border:1px solid var(--line2);transition:border-color .5s,opacity .5s,transform .5s var(--ease)}
+.pc-k{font-size:11.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.pc h3{margin:4px 0 0;font-size:clamp(22px,2.3vw,32px);font-weight:800;line-height:1.05;overflow-wrap:anywhere}
+.pc p{margin:0;color:var(--muted);font-size:15.5px}
+.pc-f{margin-top:auto;padding-top:8px;display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.pc-sc{font-size:34px;font-weight:900;line-height:1}
+.pc-tag{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:6px;background:var(--line);color:var(--muted)}
+.pc.win{border-color:var(--leaf);background:linear-gradient(160deg,rgba(143,211,148,.26),rgba(31,92,34,.35) 60%,var(--card2))}
+.pc.win .pc-tag{background:var(--leaf);color:#0B1A0E}
+.pc.ll{border-color:var(--gold);background:linear-gradient(160deg,rgba(224,184,95,.24),var(--card2) 70%)}
+.pc.ll .pc-tag{background:var(--gold);color:#1C1406}
+.pc.out{opacity:.5}
+.pc.ph{border-style:dashed;background:transparent}
+.pc.ph h3{color:var(--muted);font-weight:600;font-size:20px}
+.pc .crown-ic{position:absolute;top:12px;right:14px;width:30px;height:30px;color:var(--gold)}
+
+.podium{display:grid;grid-template-columns:1fr;gap:10px;align-items:end}
+@media (min-width:640px){.podium{grid-template-columns:1fr 1.25fr 1fr}}
+.pd{display:flex;flex-direction:column;gap:2px;padding:16px;border-radius:14px;background:var(--card2);border:1px solid var(--line2);min-height:130px;justify-content:flex-end}
+.pd.p1{min-height:170px;border-color:var(--gold);background:linear-gradient(170deg,rgba(224,184,95,.3),rgba(31,92,34,.4) 65%,var(--card2));box-shadow:0 0 60px -20px rgba(224,184,95,.6)}
+.pd-r{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.pd.p1 .pd-r{color:var(--gold)}.pd-r svg{width:22px;height:22px}
+.pd h3{margin:4px 0 0;font-size:clamp(22px,2.4vw,34px);font-weight:900;line-height:1.05}
+.pd.p1 h3{font-size:clamp(28px,3vw,42px)}
+.pd p{margin:0;color:var(--muted);font-size:15px}
+
+.waiting{grid-column:1/-1;padding:40px 20px;text-align:center;border:1px dashed var(--line2);border-radius:14px;color:var(--muted);font-size:18px}
+.waiting b{display:block;color:var(--ink);font-size:clamp(26px,3vw,40px);font-weight:900;margin-bottom:4px}
+
+/* bracket */
+.scroller{min-height:0;overflow:auto;border-radius:14px;border:1px solid var(--line);background:#0A160D;padding:0;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.bracket{display:flex;gap:28px;align-items:stretch;min-width:min-content;padding:0 18px 18px}
+.col{width:236px;flex:none;display:flex;flex-direction:column;gap:10px;transition:opacity .7s var(--ease),filter .7s var(--ease)}
+.col.is-next{opacity:.4;filter:saturate(.4)}
+.col.is-done{opacity:.75}
+.col-h{position:sticky;top:0;z-index:4;background:#0A160D;padding:14px 0 6px;border-bottom:2px solid var(--line)}
+.col.is-live .col-h{border-color:var(--leaf)}
+.col-h h2{margin:0;font-size:19px;font-weight:900;text-transform:uppercase;letter-spacing:.06em}
+.col.is-live .col-h h2{color:var(--leaf)}
+.col.final .col-h h2{color:var(--gold)}
+.col-h p{margin:2px 0 0;font-size:12.5px;color:var(--muted)}
+.col-heats{display:flex;flex-direction:column;justify-content:space-around;gap:12px;flex:1}
+
+@property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+.hc{position:relative;background:var(--card);border:1px solid var(--line);border-radius:10px;transition:transform .6s var(--ease),box-shadow .6s var(--ease),border-color .6s}
+.hc.live{border-color:transparent;transform:scale(1.04);box-shadow:0 0 0 1px rgba(143,211,148,.25),0 12px 40px -10px rgba(143,211,148,.45);z-index:2}
+.ring{position:absolute;inset:-2px;border-radius:12px;padding:2px;pointer-events:none;view-transition-name:live-ring;
+  background:conic-gradient(from var(--ang),var(--leaf),var(--gold),var(--green),var(--leaf));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:spin 3.2s linear infinite}
+@keyframes spin{to{--ang:360deg}}
+.hc-h{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em}
+.hc-id{color:var(--ink)}
+.chip{margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.12em;padding:1px 7px;border-radius:4px}
+.chip.live{background:var(--live);color:#fff}
+.chip.done{background:rgba(143,211,148,.15);color:var(--leaf)}
+.chip.bye{background:var(--line);color:var(--muted)}
+.hc ol{list-style:none;margin:0;padding:0}
+.sl{position:relative;display:flex;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid var(--line);min-height:44px;overflow:hidden}
+.sl-t{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.2}
+.sl-n{font-weight:700;font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-s{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sl-sc{font-size:17px;font-weight:800}
+.sl-ic{flex:none;width:18px;height:18px;display:grid;place-items:center;border-radius:50%;font-size:11px;font-weight:900}
+.sl.win{background:var(--win-bg)}.sl.win .sl-ic{background:var(--leaf);color:#0B1A0E}
+.sl.ll{background:var(--ll-bg)}.sl.ll .sl-ic{background:var(--gold);color:#1C1406}
+.sl.p1{background:var(--ll-bg)}.sl.p1 .sl-ic{background:var(--gold);color:#1C1406}
+.sl.p2 .sl-ic,.sl.p3 .sl-ic{background:var(--line2);color:var(--ink)}
+.sl.out .sl-n{color:var(--muted);text-decoration:line-through;text-decoration-thickness:1px}
+.sl.out{opacity:.6}
+.sl.ph .sl-n{color:var(--muted);font-weight:500;font-style:italic;font-size:13px}
+.sl.ph{background:repeating-linear-gradient(135deg,transparent 0 7px,rgba(46,76,53,.35) 7px 8px)}
+
+/* efek perubahan */
+.fx-fill{animation:fill .8s var(--ease) both}
+@keyframes fill{from{opacity:0;transform:perspective(500px) rotateX(-80deg)}to{opacity:1;transform:none}}
+.fx-win::after,.pc.fx-win::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 20%,rgba(216,245,218,.55) 50%,transparent 80%);transform:translateX(-100%);animation:sweep 1.1s var(--ease) forwards;pointer-events:none}
+@keyframes sweep{to{transform:translateX(100%)}}
+.fx-win .sl-ic,.fx-win .pc-tag{animation:pop .6s var(--ease) both .3s}
+@keyframes pop{0%{transform:scale(.2);opacity:0}70%{transform:scale(1.25)}100%{transform:scale(1);opacity:1}}
+.fx-score .sl-sc,.fx-score .pc-sc{animation:pop .5s var(--ease) both}
+.fx-out{animation:fade .8s ease both}
+@keyframes fade{from{opacity:1}to{opacity:.6}}
+.reveal{animation:rise .7s var(--ease) both;animation-delay:calc(var(--i,0)*60ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* transisi halaman */
+::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
+::view-transition-group(live-ring){animation-duration:.8s;animation-timing-function:var(--ease)}
+::view-transition-group(spot-label),::view-transition-group(spot-0),::view-transition-group(spot-1),::view-transition-group(spot-2){animation-duration:.55s;animation-timing-function:var(--ease)}
+::view-transition-new(spot-0),::view-transition-new(spot-1),::view-transition-new(spot-2){animation:vt-in .55s var(--ease) both}
+::view-transition-new(spot-1){animation-delay:.07s}::view-transition-new(spot-2){animation-delay:.14s}
+::view-transition-old(spot-0),::view-transition-old(spot-1),::view-transition-old(spot-2){animation:vt-out .3s ease both}
+@keyframes vt-in{from{opacity:0;transform:translateY(18px) scale(.97)}}
+@keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}
+
+/* juara */
+.champ-ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;cursor:pointer;
+  background:radial-gradient(60% 50% at 50% 40%,rgba(224,184,95,.28),transparent 70%),radial-gradient(80% 70% at 50% 60%,rgba(31,92,34,.9),rgba(7,17,10,.96));
+  opacity:0;transition:opacity .5s ease}
+.champ-ov.show{opacity:1}
+.co{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transform:scale(.9);transition:transform .8s var(--ease)}
+.champ-ov.show .co{transform:none}
+.co-eb{font-size:14px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+.co-crown{width:84px;height:84px;color:var(--gold);filter:drop-shadow(0 6px 24px rgba(224,184,95,.6));animation:float 3s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px) rotate(-3deg)}}
+.co h2{margin:0;font-size:clamp(44px,8vw,112px);font-weight:900;line-height:.95;letter-spacing:-.02em;text-wrap:balance}
+.co-shop{margin:0;font-size:clamp(18px,2.2vw,28px);color:#CFE6D1}
+.co-rest{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 28px;margin-top:18px;font-size:18px;color:#CFE6D1}
+.co-rest b{color:var(--gold);margin-right:6px;text-transform:uppercase;letter-spacing:.08em;font-size:13px}
+.co-hint{margin-top:22px;font-size:13px;color:var(--muted)}
+#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:30;pointer-events:none}
+
+.conn{position:fixed;right:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));z-index:5;display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted);padding:4px 10px;border-radius:99px;background:rgba(15,29,19,.85);border:1px solid var(--line)}
+.conn i{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.conn.ok i{background:var(--leaf)}.conn.local i{background:var(--gold)}.conn.err i{background:var(--live)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+<div class="screen">
+  <header class="bar">
+    <div>
+      <span class="eyebrow"><span class="cups" aria-hidden="true"><i></i><i></i><i></i></span>Stoa Space · Fun Brewing Battle</span>
+      <h1>Tarung <em>Tiga</em> Stoa</h1>
+    </div>
+    <div class="now" id="now" hidden><span class="dot"></span><b>LIVE</b><span id="nowTxt"></span></div>
+  </header>
+  <ol class="steps" id="steps" aria-label="Babak"></ol>
+  <section class="spot" id="spot" aria-live="polite"></section>
+  <div class="scroller" id="scroller"><div class="bracket" id="bracket"></div></div>
+</div>
+<div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Tarung Tiga Stoa"></div>
+<canvas id="confetti" hidden></canvas>
+<div class="conn" id="conn"><i></i><span>Menghubungkan…</span></div>
+
+<script src="shared.js"></script>
+<script>
+(function(){
+const {esc,normalize,engine,CROWN,Sync}=TTS;
+const $=s=>document.querySelector(s);
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const desk=()=>matchMedia('(min-width: 900px) and (min-height: 600px)').matches;
+const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+let st=null,lastUpd=-1,rendered=false,prevSig=new Map(),lastLive='',champKey='',champT=null;
+const E=engine(()=>st);
+
+/* ---------- data masuk ---------- */
+function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);update()}
+function update(){if(!rendered||reduce||!document.startViewTransition){render();return}document.startViewTransition(()=>render())}
+
+/* ---------- bantu ---------- */
+const scoreOf=(k,id)=>{const c=(st.res[k]||{})[id];return c&&c.s!=null&&c.s!==''?String(c.s):''};
+function showScore(rd,hi){if(st.showScores==='all')return true;if(st.showScores==='none')return false;const s=E.heatState(rd,hi);return s==='done'||s==='bye'}
+function tagOf(rd,s){return s==='win'?'Lolos':s==='ll'?(rd.a===0?'Skor terbaik':'Lucky loser'):s==='out'?'Gugur':s[0]==='p'?'Juara '+s[1]:''}
+const roundDone=rd=>rd.heats.every((h,hi)=>{const s=E.heatState(rd,hi);return s==='done'||s==='bye'});
+
+/* ---------- render ---------- */
+function render(){
+  if(!st){rendered=true;return}
+  const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim);
+  const fin=rs[rs.length-1],finished=roundDone(fin);
+  renderNow(rs,lv,finished);renderSteps(rs,lv,finished);renderSpot(rs,lv,finished);renderBracket(rs,lv,finished);
+  fit();if(rendered)runFx();else snapshotSig();
+  const key=finished?'end':lv.ri+'-'+lv.hi;
+  if(key!==lastLive){const first=!lastLive;lastLive=key;requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToLive(first)))}
+  champion(fin,finished);
+  rendered=true;
+}
+function renderNow(rs,lv,finished){
+  const n=$('#now');n.hidden=false;n.classList.toggle('done',finished);
+  n.querySelector('b').textContent=finished?'SELESAI':'LIVE';
+  const rd=rs[lv.ri];
+  $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
+}
+function renderSteps(rs,lv,finished){
+  $('#steps').innerHTML=rs.map((rd,ri)=>{
+    const ss=rd.heats.map((h,hi)=>E.heatState(rd,hi)),tot=ss.filter(s=>s!=='bye').length||1,dn=ss.filter(s=>s==='done').length;
+    const all=roundDone(rd),cls=all?'done':(ri===lv.ri&&!finished?'live':'next');
+    return '<li class="step '+cls+'"><span class="step-k">'+(all?CHECK:'')+rd.sp.label+'</span><span class="step-m">'+(rd.sp.kind==='final'?rd.n+' finalis':rd.H+' heat · '+rd.n+' → '+rd.T)+'</span><span class="step-bar"><i style="width:'+Math.round(dn/tot*100)+'%"></i></span></li>';
+  }).join('<li class="step-sep" aria-hidden="true"></li>');
+}
+function spotCard(rd,m,i,show){
+  const pos='spot-'+i,vt=' style="view-transition-name:spot-'+i+'"';
+  if(m.id==null)return '<article class="pc ph" data-pos="'+pos+'" data-sig="ph~'+esc(m.ph)+'"'+vt+'><span class="pc-k">Stasiun '+(i+1)+'</span><h3>Menunggu</h3><p>'+esc(m.ph)+'</p></article>';
+  const id=m.id,s=rd.status.get(id)||'',sc=show?scoreOf(rd.sp.short,id):'',t=tagOf(rd,s);
+  const cls=s==='win'||s==='p1'?'win':s==='ll'?'ll':s==='out'?'out':'';
+  return '<article class="pc '+cls+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"'+vt+'>'+(s==='win'||s==='p1'?'<span class="crown-ic">'+CROWN+'</span>':'')+
+    '<span class="pc-k">Stasiun '+(i+1)+'</span><h3>'+esc(E.nameOf(id))+'</h3><p>'+esc(E.shopOf(id)||' ')+'</p>'+
+    '<div class="pc-f"><b class="pc-sc">'+esc(sc)+'</b>'+(t?'<span class="pc-tag">'+t+'</span>':'')+'</div></article>';
+}
+function renderSpot(rs,lv,finished){
+  const fin=rs[rs.length-1];
+  if(finished){
+    const o=fin.evals[0].order,show=showScore(fin,0);
+    const cards=[[1,'p2'],[0,'p1'],[2,'p3']].filter(([k])=>o[k]!=null).map(([k,c])=>{const id=o[k],sc=show?scoreOf('FN',id):'';
+      return '<article class="pd '+c+'" data-pos="spot-'+k+'" data-sig="'+id+'~'+c+'" style="view-transition-name:spot-'+k+'"><span class="pd-r">'+(k===0?CROWN:'')+'Juara '+(k+1)+(sc?' · '+esc(sc):'')+'</span><h3>'+esc(E.nameOf(id))+'</h3><p>'+esc(E.shopOf(id)||' ')+'</p></article>'}).join('');
+    $('#spot').innerHTML='<div class="spot-l"><span class="spot-lab is-done"><i></i>Hasil akhir</span><strong class="spot-t">Juara</strong><span class="spot-s">Tarung Tiga Stoa</span></div><div class="podium">'+cards+'</div>';
+    return;
+  }
+  const rd=rs[lv.ri],hi=lv.hi,hm=rd.heats[hi],state=E.heatState(rd,hi),show=showScore(rd,hi);
+  const lab=state==='done'?['is-done','Hasil heat']:state==='wait'?['is-next','Berikutnya']:['','Sedang bertanding'];
+  const title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1);
+  const sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
+  $('#spot').innerHTML='<div class="spot-l"><span class="spot-lab '+lab[0]+'"><i></i>'+lab[1]+'</span><strong class="spot-t">'+title+'</strong><span class="spot-s">'+sub+'</span></div>'+
+    '<div class="spot-cards n'+hm.length+'">'+hm.map((m,i)=>spotCard(rd,m,i,show)).join('')+'</div>';
+}
+function hcard(rd,hi,live){
+  const hm=rd.heats[hi],state=E.heatState(rd,hi),show=showScore(rd,hi),key=rd.sp.short;
+  const lis=hm.map((m,i)=>{
+    const pos=key+'-'+hi+'-'+i;
+    if(m.id==null)return '<li class="sl ph" data-pos="'+pos+'" data-sig="ph~'+esc(m.ph)+'"><span class="sl-t"><span class="sl-n">'+esc(m.ph)+'</span></span></li>';
+    const id=m.id,s=hm.length===1?'win':(rd.status.get(id)||''),sc=show&&hm.length>1?scoreOf(key,id):'';
+    const ic=s==='win'?'✓':s==='ll'?'LL':s[0]==='p'?s[1]:'';
+    return '<li class="sl '+s+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"><span class="sl-t"><span class="sl-n">'+esc(E.nameOf(id))+'</span><span class="sl-s">'+esc(E.shopOf(id)||' ')+'</span></span>'+
+      (sc?'<b class="sl-sc">'+esc(sc)+'</b>':'')+(ic?'<span class="sl-ic">'+ic+'</span>':'')+'</li>';
+  }).join('');
+  const chip=live?'<span class="chip live">LIVE</span>':state==='done'?'<span class="chip done">SELESAI</span>':state==='bye'?'<span class="chip bye">BYE</span>':'';
+  return '<article class="hc st-'+state+(live?' live':'')+'">'+(live?'<span class="ring" aria-hidden="true"></span>':'')+'<header class="hc-h"><span class="hc-id">'+(rd.sp.kind==='final'?'FINAL':'H'+(hi+1))+'</span>'+chip+'</header><ol>'+lis+'</ol></article>';
+}
+function renderBracket(rs,lv,finished){
+  $('#bracket').innerHTML=rs.map((rd,ri)=>{
+    const cls=finished?(rd.sp.kind==='final'?'is-live':'is-done'):ri===lv.ri?'is-live':roundDone(rd)?'is-done':'is-next';
+    const meta=rd.sp.kind==='final'?rd.n+' finalis':rd.H+' heat · '+rd.n+' → '+rd.T;
+    return '<section class="col '+cls+' '+rd.sp.kind+(rendered?'':' reveal')+'" style="--i:'+ri+'"><header class="col-h"><h2>'+rd.sp.label+'</h2><p>'+meta+'</p></header><div class="col-heats">'+
+      rd.heats.map((h,hi)=>hcard(rd,hi,!finished&&ri===lv.ri&&hi===lv.hi)).join('')+'</div></section>';
+  }).join('');
+}
+
+/* ---------- efek perubahan ---------- */
+function snapshotSig(){prevSig=new Map();document.querySelectorAll('[data-pos]').forEach(el=>prevSig.set(el.dataset.pos,el.dataset.sig))}
+function runFx(){
+  const next=new Map();
+  document.querySelectorAll('[data-pos]').forEach(el=>{
+    const pos=el.dataset.pos,sig=el.dataset.sig,old=prevSig.get(pos);next.set(pos,sig);
+    if(old===undefined||old===sig)return;
+    const [oi,os,osc]=old.split('~'),[ni,ns,nsc]=sig.split('~');
+    let c='';
+    if(oi!==ni)c='fx-fill';
+    else if(os!==ns&&/^(win|ll|p1|p2|p3)$/.test(ns))c='fx-win';
+    else if(os!==ns&&ns==='out')c='fx-out';
+    else if(osc!==nsc&&nsc)c='fx-score';
+    if(c){el.classList.add(c);el.style.position=el.style.position||'relative'}
+  });
+  prevSig=next;
+}
+
+/* ---------- ukuran & gulir ---------- */
+function fit(){
+  const sc=$('#scroller'),br=$('#bracket');br.style.zoom='';
+  if(!desk())return;
+  const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H)return;
+  let z=Math.min(1,aw/W,ah/H);if(z<0.62)z=Math.max(0.62,Math.min(1,aw/W));
+  br.style.zoom=z.toFixed(3);
+}
+function scrollToLive(instant){
+  const el=document.querySelector('.hc.live')||document.querySelector('.col.final .hc');if(!el)return;
+  const sc=$('#scroller'),r=el.getBoundingClientRect(),s=sc.getBoundingClientRect();
+  sc.scrollTo({left:sc.scrollLeft+r.left-s.left-(s.width-r.width)/2,top:desk()?sc.scrollTop+r.top-s.top-(s.height-r.height)/2:0,behavior:instant||reduce?'auto':'smooth'});
+}
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fit();scrollToLive(true)},150)});
+
+/* ---------- juara ---------- */
+function champion(fin,finished){
+  const ov=$('#champ');
+  if(finished){const o=fin.evals[0].order,k=o.join(',');if(k===champKey)return;champKey=k;
+    const rest=o.slice(1).map((id,i)=>'<span><b>Juara '+(i+2)+'</b>'+esc(E.fullOf(id))+'</span>').join('');
+    ov.innerHTML='<div class="co"><span class="co-eb">Juara Tarung Tiga Stoa</span><span class="co-crown">'+CROWN+'</span><h2>'+esc(E.nameOf(o[0]))+'</h2><p class="co-shop">'+esc(E.shopOf(o[0]))+'</p><div class="co-rest">'+rest+'</div><p class="co-hint">Ketuk untuk menutup</p></div>';
+    ov.hidden=false;requestAnimationFrame(()=>requestAnimationFrame(()=>ov.classList.add('show')));confetti();
+    clearTimeout(champT);champT=setTimeout(hideChamp,20000);
+  }else if(champKey){champKey='';hideChamp()}
+}
+function hideChamp(){const ov=$('#champ');ov.classList.remove('show');setTimeout(()=>{if(!ov.classList.contains('show'))ov.hidden=true},500)}
+$('#champ').addEventListener('click',hideChamp);
+function confetti(){
+  if(reduce)return;const c=$('#confetti'),x=c.getContext('2d'),d=devicePixelRatio||1,W=innerWidth,H=innerHeight;
+  c.width=W*d;c.height=H*d;c.hidden=false;
+  const cols=['#8FD394','#1F5C22','#E0B85F','#EEF6EE','#F4EAD2','#5BAF61'],P=[];
+  const burst=(cx,cy,n,spread)=>{for(let i=0;i<n;i++){const a=-Math.PI/2+(Math.random()-.5)*spread,v=8+Math.random()*12;P.push({x:cx,y:cy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,w:6+Math.random()*8,h:4+Math.random()*6,r:Math.random()*6.3,vr:(Math.random()-.5)*.35,c:cols[i%cols.length]})}};
+  burst(W/2,H*.55,160,2.2);setTimeout(()=>{burst(W*.1,H,90,1);burst(W*.9,H,90,1)},450);
+  const t0=performance.now();
+  (function f(t){const el=t-t0;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);
+    P.forEach(p=>{p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.globalAlpha=Math.max(0,1-el/6500);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore()});
+    if(el<6500)requestAnimationFrame(f);else{x.clearRect(0,0,W,H);c.hidden=true}})(t0);
+}
+
+/* ---------- koneksi ---------- */
+function setConn(k,t){const el=$('#conn');el.className='conn '+k;el.querySelector('span').textContent=t}
+function waiting(msg){if(st)return;$('#spot').innerHTML='<div class="waiting"><b>Bracket segera tampil</b>'+esc(msg)+'</div>'}
+let fails=0;
+async function poll(){const r=await Sync.get();
+  if(r.configured&&!r.error){fails=0;setConn('ok','Live');if(r.state)apply(r.state);else waiting('Admin belum memulai bracket.')}
+  else if(++fails>2)setConn('err','Menyambung ulang…')}
+async function start(){
+  Sync.onLocal(apply);
+  const r=await Sync.get();
+  if(r.configured&&!r.error){setConn('ok','Live');if(r.state)apply(r.state);else waiting('Admin belum memulai bracket.');
+    setInterval(()=>{if(!document.hidden)poll()},1500);document.addEventListener('visibilitychange',()=>{if(!document.hidden)poll()})}
+  else{setConn('local','Mode lokal');apply(Sync.readLocal());waiting('Buka halaman admin di perangkat ini untuk memulai.')}
+}
+start();
+})();
+</script>
+</body>
+</html>
