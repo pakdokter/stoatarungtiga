@@ -171,6 +171,18 @@ h1 em{font-style:normal;color:var(--leaf)}
 @keyframes vt-in{from{opacity:0;transform:translateY(18px) scale(.97)}}
 @keyframes vt-out{to{opacity:0;transform:translateY(-10px)}}
 
+.spot-cards.many{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.spot-cards.many .pc{min-height:0;padding:10px 12px}
+.spot-cards.many .pc h3{font-size:19px}
+.spot-cards.many .pc p{font-size:13.5px}
+.spot-cards.many .pc-sc{font-size:24px}
+.spot-t.sm{font-size:clamp(28px,3vw,42px);white-space:nowrap}
+.pc-sc small{font-size:14px;font-weight:700;color:var(--muted);margin-left:4px}
+.pc.tie{border-color:var(--gold);border-style:dashed}
+.announce{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));z-index:15;transform:translate(-50%,-140%);display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);padding:12px 20px;border-radius:14px;background:linear-gradient(120deg,#3A2E12,#1C2A16);border:1px solid var(--gold);box-shadow:0 16px 50px -12px rgba(224,184,95,.5);transition:transform .7s var(--ease)}
+.announce.show{transform:translate(-50%,0)}
+.announce b{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);white-space:nowrap}
+.announce span{font-size:clamp(16px,1.8vw,22px);font-weight:700}
 /* juara */
 .champ-ov{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px;cursor:pointer;
   background:radial-gradient(60% 50% at 50% 40%,rgba(224,184,95,.28),transparent 70%),radial-gradient(80% 70% at 50% 60%,rgba(31,92,34,.9),rgba(7,17,10,.96));
@@ -211,6 +223,7 @@ h1 em{font-style:normal;color:var(--leaf)}
 </div>
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Tarung Tiga Stoa"></div>
 <canvas id="confetti" hidden></canvas>
+<div class="announce" id="announce" role="status" aria-live="polite"><b id="annK"></b><span id="annT"></span></div>
 <div class="conn" id="conn"><i></i><span>Menghubungkan…</span></div>
 
 <script src="shared.js"></script>
@@ -250,7 +263,7 @@ function renderNow(rs,lv,finished){
   const n=$('#now');n.hidden=false;n.classList.toggle('done',finished);
   n.querySelector('b').textContent=finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
-  $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
+  $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){
   $('#steps').innerHTML=rs.map((rd,ri)=>{
@@ -266,7 +279,7 @@ function spotCard(rd,m,i,show){
   const cls=s==='win'||s==='p1'?'win':s==='ll'?'ll':s==='out'?'out':'';
   return '<article class="pc '+cls+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"'+vt+'>'+(s==='win'||s==='p1'?'<span class="crown-ic">'+CROWN+'</span>':'')+
     '<span class="pc-k">Stasiun '+(i+1)+'</span><h3>'+esc(E.nameOf(id))+'</h3><p>'+esc(E.shopOf(id)||' ')+'</p>'+
-    '<div class="pc-f"><b class="pc-sc">'+esc(sc)+'</b>'+(t?'<span class="pc-tag">'+t+'</span>':'')+'</div></article>';
+    '<div class="pc-f"><b class="pc-sc">'+esc(sc)+(sc&&st.judges?'<small>suara</small>':'')+'</b>'+(t?'<span class="pc-tag">'+t+'</span>':'')+'</div></article>';
 }
 function renderSpot(rs,lv,finished){
   const fin=rs[rs.length-1];
@@ -278,7 +291,13 @@ function renderSpot(rs,lv,finished){
     return;
   }
   const rd=rs[lv.ri],hi=lv.hi,hm=rd.heats[hi],state=E.heatState(rd,hi),show=showScore(rd,hi);
-  const lab=state==='done'?['is-done','Hasil heat']:state==='wait'?['is-next','Berikutnya']:['','Sedang bertanding'];
+  if(state==='tiecut'&&rd.tieGroup&&!rd.tieGroup.resolved){
+    const tg=rd.tieGroup,unit=st.judges?' suara':'';
+    const cards=tg.cands.map((id,i)=>'<article class="pc tie" data-pos="spot-t'+i+'" data-sig="'+id+'~tie"'+(i<3?' style="view-transition-name:spot-'+i+'"':'')+'><span class="pc-k">Kandidat</span><h3>'+esc(E.nameOf(id))+'</h3><p>'+esc(E.shopOf(id)||'\u00a0')+'</p><div class="pc-f"><b class="pc-sc">'+esc(tg.score==null?'':tg.score)+(st.judges?'<small>suara</small>':'')+'</b><span class="pc-tag">Seri</span></div></article>').join('');
+    $('#spot').innerHTML='<div class="spot-l"><span class="spot-lab is-done"><i></i>Penentuan lucky loser</span><strong class="spot-t sm">'+rd.sp.label+'</strong><span class="spot-s">'+tg.cands.length+' peserta seri'+(tg.score!=null?' '+esc(tg.score)+unit:'')+' untuk '+tg.need+' kursi. Menunggu tiebreak.</span></div><div class="spot-cards many">'+cards+'</div>';
+    return;
+  }
+  const lab=state==='done'?['is-done','Hasil heat']:state==='wait'?['is-next','Berikutnya']:state==='tie'?['is-done','Seri, menunggu tiebreak']:['','Sedang bertanding'];
   const title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1);
   const sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
   $('#spot').innerHTML='<div class="spot-l"><span class="spot-lab '+lab[0]+'"><i></i>'+lab[1]+'</span><strong class="spot-t">'+title+'</strong><span class="spot-s">'+sub+'</span></div>'+
@@ -302,14 +321,17 @@ function renderBracket(rs,lv,finished){
     const cls=finished?(rd.sp.kind==='final'?'is-live':'is-done'):ri===lv.ri?'is-live':roundDone(rd)?'is-done':'is-next';
     const meta=rd.sp.kind==='final'?rd.n+' finalis':rd.H+' heat · '+rd.n+' → '+rd.T;
     return '<section class="col '+cls+' '+rd.sp.kind+(rendered?'':' reveal')+'" style="--i:'+ri+'"><header class="col-h"><h2>'+rd.sp.label+'</h2><p>'+meta+'</p></header><div class="col-heats">'+
-      rd.heats.map((h,hi)=>hcard(rd,hi,!finished&&ri===lv.ri&&hi===lv.hi)).join('')+'</div></section>';
+      rd.heats.map((h,hi)=>hcard(rd,hi,!finished&&ri===lv.ri&&hi===lv.hi&&E.heatState(rd,hi)!=='tiecut')).join('')+'</div></section>';
   }).join('');
 }
 
 /* ---------- efek perubahan ---------- */
 function snapshotSig(){prevSig=new Map();document.querySelectorAll('[data-pos]').forEach(el=>prevSig.set(el.dataset.pos,el.dataset.sig))}
 function runFx(){
-  const next=new Map();
+  const next=new Map(),fresh=[];
+  document.querySelectorAll('.sl[data-pos]').forEach(el=>{const o=prevSig.get(el.dataset.pos),[ni,ns]=el.dataset.sig.split('~');if(ns==='ll'&&o!==undefined){const [oi,os]=o.split('~');if(os!=='ll'&&!fresh.includes(+ni))fresh.push(+ni)}});
+  if(fresh.length){const rd=E.simulate().rounds.find(r=>r.tieGroup&&r.tieGroup.resolved&&fresh.some(id=>(r.tieGroup.sel||[]).includes(id)))||E.simulate().rounds.find(r=>!r.skipped&&fresh.some(id=>r.status&&r.status.get(id)==='ll'));
+    announce('Lucky loser'+(rd?' · '+rd.sp.label:'')+(rd&&rd.tieGroup&&rd.tieGroup.draw?' · undian':''),fresh.map(id=>E.fullOf(id)).join('  ·  '))}
   document.querySelectorAll('[data-pos]').forEach(el=>{
     const pos=el.dataset.pos,sig=el.dataset.sig,old=prevSig.get(pos);next.set(pos,sig);
     if(old===undefined||old===sig)return;
@@ -324,6 +346,7 @@ function runFx(){
   prevSig=next;
 }
 
+let annT;function announce(k,t){$('#annK').textContent=k;$('#annT').textContent=t;const a=$('#announce');a.classList.add('show');clearTimeout(annT);annT=setTimeout(()=>a.classList.remove('show'),8000)}
 /* ---------- ukuran & gulir ---------- */
 function fit(){
   const sc=$('#scroller'),br=$('#bracket');br.style.zoom='';
