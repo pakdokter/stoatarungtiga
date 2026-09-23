@@ -203,6 +203,19 @@ a.btn{text-decoration:none;color:inherit}
 .live-btn:hover{border-color:var(--live);color:var(--live)}
 .live-btn[aria-pressed="true"]{background:var(--live);border-color:var(--live);color:#fff}
 .heat.is-live{outline:2px solid var(--live);outline-offset:2px}
+.crown{position:relative}
+.crown .rk{position:absolute;right:-3px;bottom:-3px;min-width:14px;height:14px;padding:0 3px;border-radius:7px;background:var(--gold);color:var(--surface);font-size:9.5px;font-weight:800;line-height:14px;text-align:center}
+.heat-foot.is-warn{background:var(--warn-soft);color:var(--warn)}
+.llp{display:flex;flex-direction:column;gap:10px}
+.llc{border:1px solid var(--gold);background:var(--gold-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.llc.ok{border-color:var(--line);background:var(--surface)}
+.llc h3{margin:0;font-size:16px;font-weight:800}
+.llc p{margin:0;font-size:13px;color:var(--muted)}
+.llc-list{display:flex;flex-wrap:wrap;gap:6px}
+.llc-list button{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);cursor:pointer;text-align:left;line-height:1.2}
+.llc-list button small{font-size:11.5px;color:var(--muted)}
+.llc-list button[aria-pressed="true"]{border-color:var(--win);background:var(--win-soft);box-shadow:inset 0 0 0 1px var(--win)}
+.llc-act{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .gate{position:fixed;inset:0;background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;padding:16px;z-index:50}
 .gate form{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:24px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow)}
 .gate p{margin:0;color:var(--muted);font-size:14px}
@@ -253,6 +266,14 @@ a.btn{text-decoration:none;color:inherit}
 
       <section class="panel" aria-labelledby="h-format">
         <h2 id="h-format">Format</h2>
+        <div>
+          <span class="lbl">Penilaian</span>
+          <div class="seg" id="segJudge">
+            <button type="button" data-j="3">3 juri<small>voting 0 sampai 3</small></button>
+            <button type="button" data-j="5">5 juri<small>voting 0 sampai 5</small></button>
+            <button type="button" data-j="0">Skor bebas<small>angka juri</small></button>
+          </div>
+        </div>
         <div>
           <span class="lbl">Semifinal</span>
           <div class="seg" id="segSemi"></div>
@@ -305,9 +326,10 @@ a.btn{text-decoration:none;color:inherit}
       <div class="legend">
         <span><i style="background:var(--win-soft)"></i>Lolos (juara heat)</span>
         <span><i style="background:var(--gold-soft)"></i>Lucky loser / skor terbaik</span>
-        <span><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-1.6-10-4.6 4.2L12 5.5 9.2 12.2 4.6 8z" fill="var(--gold)"/></svg>Mahkota: pilih pemenang tanpa skor / pecah skor seri</span>
+        <span><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-1.6-10-4.6 4.2L12 5.5 9.2 12.2 4.6 8z" fill="var(--gold)"/></svg>Mahkota: klik berurutan untuk menentukan peringkat saat seri (1, lalu 2)</span>
         <span><span class="live-btn" aria-hidden="true" style="background:var(--live);border-color:var(--live);color:#fff">LIVE</span>Tampilkan heat ini di layar peserta</span>
       </div>
+      <div class="llp" id="llp"></div>
       <div class="scroller"><div class="bracket" id="bracket"></div></div>
       <textarea class="copy-fb" id="copyFb" readonly hidden aria-label="Teks jadwal"></textarea>
     </main>
@@ -387,6 +409,7 @@ function renderSetup(sim){
   else if(st.names.length<N)h+=' '+(N-st.names.length)+' slot memakai nama "Peserta n".';
   const ns=st.names.slice(0,N).filter(x=>x.trim()&&!splitEntry(x).s).length;if(ns)h+=' '+ns+' peserta belum ada coffeeshop.';
   $('#namesHint').textContent=h+' Format: Nama - Coffeeshop. Bisa juga seret file ke kotak ini.';
+  document.querySelectorAll('#segJudge button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.j===st.judges)));
   document.querySelectorAll('#segRem button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rem===st.rem)));
   const md=N%3;$('#remHint').textContent=md?(N+' peserta = '+Math.floor(N/3)+' heat penuh + sisa '+md+'. '+(st.rem==='bye'?md+' peserta dapat bye (acak lewat undian).':'Sisa digabung jadi heat isi 2.')):(N+' peserta habis dibagi 3, semua heat penuh di babak 1.');
   $('#segSemi').innerHTML=[[0,'Tanpa semifinal','langsung ke final'],[3,'Tarung Tiga',(F*3)+' peserta, 3 heat']]
@@ -416,7 +439,7 @@ function renderSetup(sim){
   $('#fixedRounds').innerHTML=fx.join('');
 }
 const nmHTML=(id,tag)=>{const s=shopOf(id);return '<span class="nm"><span class="nm-l"><span class="nm-t" title="'+esc(fullOf(id))+'">'+esc(nameOf(id))+'</span></span>'+((s||tag)?'<span class="nm-sl">'+(tag||'')+(s?'<span class="nm-s">'+esc(s)+'</span>':'')+'</span>':'')+'</span>'};
-const ST_TXT={wait:['','Menunggu'],bye:['s-done','Lolos otomatis'],done:['s-done','Selesai'],tie:['s-warn','Skor seri'],tiecut:['s-warn','Seri di batas LL'],waitpool:['s-play','Tunggu heat lain'],play:['s-play','Isi skor']};
+const ST_TXT={wait:['','Menunggu'],bye:['s-done','Lolos otomatis'],done:['s-done','Selesai'],tie:['s-warn','Seri: klik mahkota'],tiecut:['s-warn','Seri lucky loser'],waitpool:['s-play','Tunggu heat lain'],play:['s-play','Isi skor']};
 function heatHTML(rd,hi,isLive){
   const hm=rd.heats[hi],ev=rd.evals[hi],key=rd.sp.short,size=hm.length;
   const [sCls,sTxt]=ST_TXT[heatState(rd,hi)];
@@ -429,10 +452,14 @@ function heatHTML(rd,hi,isLive){
     else if(stt==='ll'){tag='<span class="tag t-ll">'+(rd.a===0?'Top':'LL')+'</span>';cls='ll'}
     else if(stt==='out')cls='out';
     else if(stt[0]==='p'){tag='<span class="tag t-'+stt+'">Juara '+stt[1]+'</span>';cls=stt}
-    return '<li class="slot '+cls+'"><button type="button" class="crown" data-k="'+key+'" data-id="'+id+'" aria-pressed="'+!!cell.w+'" aria-label="Pilih '+esc(nm)+' sebagai pemenang heat"'+(dis?' disabled':'')+'>'+CROWN+'</button>'+nmHTML(id,tag)+
-      '<input class="sc" id="s-'+key+'-'+id+'" data-k="'+key+'" data-id="'+id+'" inputmode="decimal" autocomplete="off" placeholder="skor" aria-label="Skor '+esc(nm)+'" value="'+esc(cell.s==null?'':cell.s)+'"'+(dis?' disabled':'')+'></li>'}).join('');
+    const rkv=ev.ready?ev.rk(id):0,unit=st.judges?'suara':'skor';
+    return '<li class="slot '+cls+'"><button type="button" class="crown" data-k="'+key+'" data-id="'+id+'" aria-pressed="'+(rkv>0)+'" aria-label="Tetapkan '+esc(nm)+' sebagai peringkat berikutnya"'+(dis?' disabled':'')+'>'+CROWN+(rkv?'<span class="rk">'+rkv+'</span>':'')+'</button>'+nmHTML(id,tag)+
+      '<input class="sc" id="s-'+key+'-'+id+'" data-k="'+key+'" data-id="'+id+'" inputmode="'+(st.judges?'numeric':'decimal')+'" autocomplete="off" placeholder="'+unit+'" aria-label="'+unit+' '+esc(nm)+'" value="'+esc(cell.s==null?'':cell.s)+'"'+(dis?' disabled':'')+'></li>'}).join('');
+  let foot='';
+  if(ev.ready&&size>1&&st.judges&&ev.complete){const sum=hm.reduce((t,m)=>t+(ev.sc(m.id)||0),0);if(sum!==st.judges)foot='<div class="heat-foot is-warn">Total suara '+sum+', seharusnya '+st.judges+' (jumlah juri)</div>'}
+  if(!foot&&ev.ready&&heatState(rd,hi)==='tie')foot='<div class="heat-foot is-warn">Seri. Setelah tiebreak, klik mahkota pemenang'+(rd.sp.kind==='final'?' lalu Juara 2':'')+'.</div>';
   const lb=size>1?'<button type="button" class="live-btn" data-k="'+key+'" data-h="'+hi+'" aria-pressed="'+isLive+'" aria-label="Tampilkan '+heatLabel(rd,hi)+' live di layar">LIVE</button>':'';
-  return '<article class="heat'+(isLive?' is-live':'')+'"><div class="heat-h"><span class="heat-id">'+(rd.sp.kind==='final'?'FINAL':key+'-H'+(hi+1))+'</span>'+(size!==3?'<span class="heat-kind">'+kindName(size)+'</span>':'')+'<span class="heat-st '+sCls+'">'+sTxt+'</span>'+lb+'</div><ol>'+lis+'</ol></article>';
+  return '<article class="heat'+(isLive?' is-live':'')+'"><div class="heat-h"><span class="heat-id">'+(rd.sp.kind==='final'?'FINAL':key+'-H'+(hi+1))+'</span>'+(size!==3?'<span class="heat-kind">'+kindName(size)+'</span>':'')+'<span class="heat-st '+sCls+'">'+sTxt+'</span>'+lb+'</div><ol>'+lis+'</ol>'+foot+'</article>';
 }
 function playable(rs){const out=[];rs.forEach((rd,ri)=>rd.heats.forEach((h,hi)=>{if(h.length>1)out.push({ri,hi,rd})}));return out}
 function renderLive(sim,rs,lv){
@@ -464,6 +491,15 @@ function renderBoard(sim){
     const rest=fev.order.slice(1,fev.determined).map((id,i)=>'Juara '+(i+2)+': '+esc(fullOf(id))).join('<br>');const cs=shopOf(fev.order[0]);
     $('#champ').innerHTML='<div class="champ"><span class="crown-big">'+CROWN+'</span><div><small>Juara Tarung Tiga Stoa</small><strong>'+esc(nameOf(fev.order[0]))+'</strong>'+(cs?'<em>'+esc(cs)+'</em>':'')+'</div><div class="rest">'+rest+'</div></div>';
   }else $('#champ').innerHTML='';
+  $('#llp').innerHTML=rs.filter(rd=>rd.tieGroup).map(rd=>{
+    const tg=rd.tieGroup,unit=st.judges?' suara':'',sel=tg.sel||(st.llPick[rd.sp.short]||[]).filter(id=>tg.cands.includes(id));
+    const kind=rd.a===0?'kursi skor terbaik':'kursi lucky loser';
+    const head=tg.resolved?'<h3>'+rd.sp.label+': lucky loser ditetapkan'+(tg.draw?' lewat undian':'')+'</h3>':'<h3>'+rd.sp.label+': '+tg.cands.length+' peserta seri '+esc(tg.score==null?'-':tg.score)+unit+' untuk '+tg.need+' '+kind+'</h3>';
+    const info=(tg.above.length?'<p>Sudah pasti lolos (skor lebih tinggi): '+tg.above.map(id=>esc(nameOf(id))).join(', ')+'.</p>':'')+'<p>Pilih '+tg.need+' peserta setelah tiebreak (brew-off / head judge), atau pakai undian acak.</p>';
+    const list='<div class="llc-list">'+tg.cands.map(id=>'<button type="button" data-llk="'+rd.sp.short+'" data-id="'+id+'" data-need="'+tg.need+'" aria-pressed="'+sel.includes(id)+'">'+esc(nameOf(id))+'<small>'+esc(shopOf(id)||'')+'</small></button>').join('')+'</div>';
+    const act='<div class="llc-act"><button type="button" class="btn primary" data-lldraw="'+rd.sp.short+'" data-need="'+tg.need+'">Undian acak</button>'+(sel.length?'<button type="button" class="btn" data-llclear="'+rd.sp.short+'">Batalkan pilihan</button>':'')+'<span class="hint">'+sel.length+' / '+tg.need+' dipilih</span></div>';
+    return '<section class="llc'+(tg.resolved?' ok':'')+'">'+head+info+list+act+'</section>';
+  }).join('');
   $('#bracket').innerHTML=rs.map((rd,ri)=>{
     const meta=rd.sp.kind==='final'?rd.n+' finalis':rd.H+' heat · '+rd.n+' → '+rd.T;
     return '<section class="col '+rd.sp.kind+'"><header class="col-h"><h3>'+rd.sp.label+'</h3><p>'+meta+'</p></header><div class="col-heats">'+rd.heats.map((h,hi)=>heatHTML(rd,hi,ri===lv.ri&&hi===lv.hi&&!lv.finished)).join('')+'</div></section>'}).join('');
@@ -477,7 +513,7 @@ function render(){
 /* ---------- actions ---------- */
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2800)}
 function hasScores(){return Object.values(st.res).some(r=>r&&Object.keys(r).length)}
-function planChanged(){if(hasScores())toast('Format berubah, skor direset');st.res={};st.live=null;save();render()}
+function planChanged(){if(hasScores())toast('Format berubah, skor direset');st.res={};st.live=null;st.llPick={};st.llDraw={};save();render()}
 function setCount(n){n=Math.max(3,Math.min(256,Math.round(+n)||3));if(n===st.count){render();return}
   st.count=n;st.order=[...Array(n).keys()];autoPlan();planChanged()}
 function parseNames(txt){return txt.split(/\r?\n/).map(line=>{let cells=line.split('\t').map(c=>c.trim()).filter(Boolean);
@@ -531,6 +567,7 @@ $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importFi
 $('#shuffle').addEventListener('click',()=>{const d=drawOrder();st.order=d.order;const had=hasScores();st.res={};st.live=null;save();render();
   toast((had?'Undian baru, skor direset. ':'Undian diacak. ')+(d.clash?d.clash+' heat babak awal masih berisi rekan satu coffeeshop':'Tidak ada rekan satu coffeeshop di heat yang sama'))});
 $('#seed').addEventListener('click',()=>{st.order=[...Array(st.count).keys()];st.res={};st.live=null;save();render();toast('Heat disusun sesuai urutan daftar')});
+$('#segJudge').addEventListener('click',e=>{const b=e.target.closest('[data-j]');if(!b)return;st.judges=+b.dataset.j;save();render()});
 $('#segRem').addEventListener('click',e=>{const b=e.target.closest('[data-rem]');if(!b)return;st.rem=b.dataset.rem;autoPlan();planChanged()});
 $('#segSemi').addEventListener('click',e=>{const b=e.target.closest('[data-semi]');if(!b)return;st.semi=+b.dataset.semi;autoPlan();planChanged()});
 $('#chips').addEventListener('click',e=>{const b=e.target.closest('[data-plan]');if(!b)return;const c=candidates(st.count,eOf())[+b.dataset.plan];if(c){st.rows=c.rows.map(r=>({...r}));planChanged()}});
@@ -551,15 +588,29 @@ $('#board').addEventListener('click',e=>{
   const lb=e.target.closest('.live-btn');
   if(lb&&lb.dataset.k){const on=lb.getAttribute('aria-pressed')!=='true';st.live=on?{k:lb.dataset.k,h:+lb.dataset.h}:null;save();render();toast(on?'Live di layar: '+(lb.dataset.k==='FN'?'Final':lb.dataset.k+'-H'+(+lb.dataset.h+1)):'Live kembali otomatis');return}
   const b=e.target.closest('.crown');if(!b||b.disabled)return;
-  const k=b.dataset.k,id=b.dataset.id,on=b.getAttribute('aria-pressed')!=='true';st.res[k]=st.res[k]||{};
-  b.closest('.heat').querySelectorAll('.crown').forEach(c=>{const x=c.dataset.id;st.res[k][x]=st.res[k][x]||{};st.res[k][x].w=false});
-  st.res[k][id].w=on;save();render()});
+  const k=b.dataset.k,id=b.dataset.id;st.res[k]=st.res[k]||{};const R=st.res[k];
+  const ids=[...b.closest('.heat').querySelectorAll('.crown')].map(c=>c.dataset.id);
+  const rk=x=>{const w=R[x]&&R[x].w;return w===true?1:(+w>0?+w:0)};
+  const mine=rk(id);
+  if(mine){ids.forEach(x=>{if(rk(x)>=mine){R[x]=R[x]||{};R[x].w=0}})}
+  else{const mx=Math.max(0,...ids.map(rk));R[id]=R[id]||{};R[id].w=mx+1}
+  save();render()});
+$('#llp').addEventListener('click',e=>{
+  const c=e.target.closest('[data-llk]'),d=e.target.closest('[data-lldraw]'),x=e.target.closest('[data-llclear]');
+  if(c){const k=c.dataset.llk,id=+c.dataset.id,need=+c.dataset.need;let sel=(st.llPick[k]||[]).slice();
+    if(sel.includes(id))sel=sel.filter(v=>v!==id);else{if(sel.length>=need)sel.shift();sel.push(id)}
+    st.llPick[k]=sel;st.llDraw[k]=false;save();render();return}
+  if(d){const k=d.dataset.lldraw,need=+d.dataset.need,rd=simulate().rounds.find(r=>r.sp&&r.sp.short===k);if(!rd||!rd.tieGroup)return;
+    const pick=shuffleArr(rd.tieGroup.cands.slice()).slice(0,need);st.llPick[k]=pick;st.llDraw[k]=true;save();render();
+    toast('Hasil undian: '+pick.map(id=>nameOf(id)).join(', '));return}
+  if(x){const k=x.dataset.llclear;delete st.llPick[k];st.llDraw[k]=false;save();render()}
+});
 $('#copy').addEventListener('click',()=>{const t=scheduleText(),fb=$('#copyFb');
   const fall=()=>{fb.value=t;fb.hidden=false;fb.focus();fb.select();toast('Salin manual dari kotak teks di bawah bracket')};
   try{navigator.clipboard.writeText(t).then(()=>{fb.hidden=true;toast('Jadwal tersalin, siap ditempel ke WhatsApp')},fall)}catch(e){fall()}});
 let armed=null;$('#reset').addEventListener('click',e=>{const b=e.currentTarget;
   if(!armed){b.textContent='Klik lagi untuk hapus semua skor';b.classList.add('armed');armed=setTimeout(()=>{b.textContent='Reset skor';b.classList.remove('armed');armed=null},3500);return}
-  clearTimeout(armed);armed=null;b.textContent='Reset skor';b.classList.remove('armed');st.res={};st.live=null;save();render();toast('Semua skor dihapus')});
+  clearTimeout(armed);armed=null;b.textContent='Reset skor';b.classList.remove('armed');st.res={};st.live=null;st.llPick={};st.llDraw={};save();render();toast('Semua skor dihapus')});
 
 if(!st.rows.length&&st.count>eOf())autoPlan();
 render();initSync();
