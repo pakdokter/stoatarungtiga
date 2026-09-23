@@ -1,4 +1,4 @@
-/* Tarung Tiga Stoa: engine bersama untuk layar peserta dan admin */
+/* Stoa Fun Brewing Competition: engine bersama untuk layar peserta dan admin */
 (function (g) {
   'use strict';
   const SAMPLE = ["Ari Wiranata - Kopi Tiga Gili", "Baiq Nurul - Senja Brew Bar", "Candra Putra - Ladang Roastery", "Dewi Lestari - Kopi Tiga Gili", "Eka Saputra - Rumah Seduh Masbagik", "Fajar Hidayat - Stoa Space", "Gita Maharani - Pojok Filter", "Hendra Kurnia - Ladang Roastery", "Intan Permata - Senja Brew Bar", "Joko Susilo - Kedai Sembalun", "Kiki Amelia - Stoa Space", "Lalu Rizky - Rumah Seduh Masbagik", "Maya Sari - Pojok Filter", "Nanda Pratama - Kedai Sembalun", "Oki Setiawan - Kopi Tiga Gili", "Putri Ayu - Ladang Roastery", "Rahmat Hadi - Senja Brew Bar", "Sinta Dewi - Pojok Filter", "Taufik Akbar - Stoa Space", "Wulan Anggraini - Kedai Sembalun"];
@@ -34,7 +34,7 @@
     const nameOf = id => splitEntry(S().names[id]).n || ('Peserta ' + (id + 1));
     const shopOf = id => splitEntry(S().names[id]).s;
     const fullOf = id => { const s = shopOf(id); return nameOf(id) + (s ? ' - ' + s : ''); };
-    const kindName = n => n === 1 ? 'Bye' : n === 2 ? 'Isi 2' : n === 3 ? 'Tarung Tiga' : n + ' orang';
+    const kindName = n => n === 1 ? 'Bye' : n === 2 ? 'Isi 2' : n === 3 ? 'Isi 3' : n + ' orang';
 
     function distribute(arr, H) { const n = arr.length, base = Math.floor(n / H), ex = n % H, out = []; let p = 0; for (let i = 0; i < H; i++) { const s = base + (i < ex ? 1 : 0); out.push(arr.slice(p, p + s)); p += s; } return out; }
     function splitBy(arr, sizes) { const out = []; let p = 0; sizes.forEach(z => { out.push(arr.slice(p, p + z)); p += z; }); return out; }

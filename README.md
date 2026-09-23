@@ -1,6 +1,6 @@
-# Tarung Tiga Stoa
+# Stoa Fun Brewing Competition
 
-Bracket live untuk Fun Brewing Battle Stoa Space.
+Bracket live untuk Stoa Fun Brewing Competition, Stoa Space Selong.
 
 - `/` : layar peserta (proyektor / HP peserta). Hanya bracket, heat LIVE disorot otomatis.
 - `/admin` : panel admin (input peserta, skor, pilih heat LIVE). Dikunci PIN.

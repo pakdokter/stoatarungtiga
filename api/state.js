@@ -1,4 +1,4 @@
-// Vercel Serverless Function: menyimpan & membagikan state bracket Tarung Tiga Stoa.
+// Vercel Serverless Function: menyimpan & membagikan state bracket Stoa Fun Brewing Competition.
 // Butuh Upstash Redis (Vercel Marketplace) dan env ADMIN_PIN.
 const REDIS_URL = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;

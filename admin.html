@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#1F5C22">
-<title>Admin Tarung Tiga</title>
+<title>Admin Fun Brewing</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 12'%3E%3Ccircle cx='6' cy='6' r='5' fill='%231F5C22'/%3E%3Ccircle cx='18' cy='6' r='5' fill='%238A6414'/%3E%3Ccircle cx='30' cy='6' r='5' fill='%231F5C22'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,11 +231,11 @@ a.btn{text-decoration:none;color:inherit}
   <header class="top">
     <div class="brand">
       <span class="eyebrow"><span class="cups" aria-hidden="true"><i></i><i></i><i></i></span>Stoa Space · Panel admin</span>
-      <h1>Tarung <em>Tiga</em> Stoa</h1>
+      <h1>Stoa Fun <em>Brewing</em> Competition</h1>
     </div>
     <div class="top-side">
       <span class="sync" id="sync"><i></i><span>Memuat…</span></span>
-      <a class="btn primary" href="index.html" target="_blank" rel="noopener">Buka layar peserta ↗</a>
+      <a class="btn primary" id="openDisplay" href="/" target="_blank" rel="noopener">Buka layar peserta ↗</a>
     </div>
   </header>
   <div class="modebar" id="modebar" hidden></div>
@@ -279,6 +279,19 @@ a.btn{text-decoration:none;color:inherit}
           <div class="seg" id="segSemi"></div>
         </div>
         <div>
+          <span class="lbl">Sistem babak awal</span>
+          <div class="seg" id="segMode">
+            <button type="button" data-mode="playin">Kualifikasi<small>bracket pas, tanpa lucky loser</small></button>
+            <button type="button" data-mode="classic">Lucky loser<small>semua main dari babak 1</small></button>
+          </div>
+        </div>
+        <div id="blkPlayin">
+          <span class="lbl">Ukuran bracket inti</span>
+          <div class="chips" id="tchips"></div>
+          <p class="hint" id="autoHint" style="margin-top:6px"></p>
+        </div>
+        <div id="blkClassic" style="display:flex;flex-direction:column;gap:12px">
+        <div>
           <span class="lbl">Sisa peserta (jika tidak habis dibagi 3)</span>
           <div class="seg" id="segRem">
             <button type="button" data-rem="bye">Bye<small>lolos otomatis</small></button>
@@ -294,8 +307,9 @@ a.btn{text-decoration:none;color:inherit}
           <span class="lbl">Atur babak (jumlah lolos)</span>
           <div class="prows" id="prows"></div>
           <div class="btns" style="margin-top:8px"><button class="btn" id="addRow" type="button">+ Tambah babak</button></div>
-          <div class="fixed-rounds" id="fixedRounds" style="margin-top:10px"></div>
         </div>
+        </div>
+        <div class="fixed-rounds" id="fixedRounds"></div>
       </section>
     </aside>
 
@@ -359,7 +373,7 @@ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 let st=normalize((()=>{try{return JSON.parse(lsGet(KEY))}catch(e){return null}})());
 const E=engine(()=>st);
-const {eOf,splitEntry,nameOf,shopOf,fullOf,kindName,distribute,splitBy,heatSizes,candidates,autoPlan,simulate,heatState,liveOf,heatLabel}=E;
+const {qualPlan,validTargets,targetOf,eOf,splitEntry,nameOf,shopOf,fullOf,kindName,distribute,splitBy,heatSizes,candidates,autoPlan,simulate,heatState,liveOf,heatLabel}=E;
 
 /* ---------- sync ---------- */
 let remote={configured:false},pin='',pushT=null;
@@ -409,10 +423,24 @@ function renderSetup(sim){
   else if(st.names.length<N)h+=' '+(N-st.names.length)+' slot memakai nama "Peserta n".';
   const ns=st.names.slice(0,N).filter(x=>x.trim()&&!splitEntry(x).s).length;if(ns)h+=' '+ns+' peserta belum ada coffeeshop.';
   $('#namesHint').textContent=h+' Format: Nama - Coffeeshop. Bisa juga seret file ke kotak ini.';
+  const play=st.mode==='playin';
+  document.querySelectorAll('#segMode button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===st.mode)));
+  $('#blkPlayin').hidden=!play;$('#blkClassic').hidden=play;
+  if(play){
+    const vt=validTargets(N),P=targetOf(N);
+    if(!vt.length||N<=E){$('#tchips').innerHTML='<p class="hint">'+N+' peserta langsung masuk '+(st.semi&&N>F?'semifinal':'final')+'.</p>';$('#autoHint').textContent=''}
+    else{
+      $('#tchips').innerHTML=vt.map(p=>{const q=qualPlan(N,p);const flow=[p];for(let n=p/3;n>=3;n/=3)flow.push(n);flow.push(1);
+        const d=q.nh?q.auto+' auto lolos · '+(N-q.auto)+' main kualifikasi ('+q.nh+' heat)':'Semua langsung bertanding, tanpa kualifikasi';
+        return '<button type="button" class="chip" data-target="'+p+'" aria-pressed="'+(p===P)+'"><b>'+(q.nh?N+' → ':'')+flow.join(' → ')+'</b><span>'+p+' besar · '+d+'</span></button>'}).join('');
+      const q=qualPlan(N,P);
+      $('#autoHint').textContent=q.nh?('Auto lolos = '+q.auto+' nama teratas di urutan undian. "Acak undian" memilih acak; "Urut sesuai daftar" memberi auto lolos ke '+q.auto+' nama teratas di daftar (unggulan).'):'';
+    }
+  }
   document.querySelectorAll('#segJudge button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.j===st.judges)));
   document.querySelectorAll('#segRem button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.rem===st.rem)));
   const md=N%3;$('#remHint').textContent=md?(N+' peserta = '+Math.floor(N/3)+' heat penuh + sisa '+md+'. '+(st.rem==='bye'?md+' peserta dapat bye (acak lewat undian).':'Sisa digabung jadi heat isi 2.')):(N+' peserta habis dibagi 3, semua heat penuh di babak 1.');
-  $('#segSemi').innerHTML=[[0,'Tanpa semifinal','langsung ke final'],[3,'Tarung Tiga',(F*3)+' peserta, 3 heat']]
+  $('#segSemi').innerHTML=[[0,'Tanpa semifinal','langsung ke final'],[3,'Pakai semifinal',(F*3)+' peserta, 3 heat']]
     .map(([v,t,s])=>'<button type="button" data-semi="'+v+'" aria-pressed="'+(st.semi===v)+'">'+t+'<small>'+s+'</small></button>').join('');
   const cands=candidates(N,E);
   if(N<=E)$('#chips').innerHTML='<p class="hint">'+N+' peserta langsung masuk '+(st.semi&&N>F?'semifinal':'final')+'. Tidak perlu babak awal.</p>';
@@ -427,15 +455,16 @@ function renderSetup(sim){
     let note='',warn=false;
     if(rd&&rd.skipped){note='Dilewati: peserta masuk ('+rd.n+') sudah ≤ kuota lolos.';warn=true}
     else if(rd){note=rd.H+' heat ('+[...new Set(rd.heats.map(h=>kindName(h.length)))].join(' + ')+') · '+(rd.warn||rd.notes.join(' · '));warn=!!rd.warn||rd.a===0}
-    return '<div class="prow"><div class="prow-main"><span class="prow-n">B'+(i+1)+'</span><span class="prow-k">Tarung Tiga</span>'+
+    return '<div class="prow"><div class="prow-main"><span class="prow-n">B'+(i+1)+'</span><span class="prow-k">Heat isi 3</span>'+
       '<span class="prow-flow">'+(rd?rd.n:'–')+' →</span>'+
       '<input id="rt-'+i+'" class="rt" data-row="'+i+'" type="number" min="1" inputmode="numeric" value="'+(last?E:r.T)+'"'+(last?' disabled title="Terkunci: kuota babak berikutnya"':'')+' aria-label="Jumlah lolos babak '+(i+1)+'">'+
       '<button type="button" class="icon-btn rdel" data-row="'+i+'" aria-label="Hapus babak '+(i+1)+'"'+(st.rows.length<2?' disabled':'')+'>×</button></div>'+
       '<p class="prow-note'+(warn?' is-warn':'')+'">'+esc(note)+'</p></div>'}).join(''):'';
   $('#addRow').hidden=!show;
   const fx=[];
-  if(st.semi&&N>F)fx.push('<span><b>Semifinal</b>: '+Math.min(N,E)+' peserta, 3 heat tarung tiga, juara heat ke final</span>');
-  fx.push('<span><b>Final</b>: Tarung Tiga, '+Math.min(N,F)+' finalis, ranking = Juara 1, 2, 3</span>');
+  if(play&&N>E){const P=targetOf(N),q=qualPlan(N,P);if(q.nh)fx.push('<span><b>Kualifikasi</b>: '+(N-q.auto)+' peserta, '+q.nh+' heat, mengisi '+q.slots+' kursi '+P+' besar</span>');for(let n=P;n>E;n/=3)fx.push('<span><b>'+n+' Besar</b>: '+(n/3)+' heat isi 3, juara heat lolos</span>')}
+  if(st.semi&&N>F)fx.push('<span><b>Semifinal</b>: '+Math.min(N,E)+' peserta, 3 heat isi 3, juara heat ke final</span>');
+  fx.push('<span><b>Final</b>: 1 heat isi 3, '+Math.min(N,F)+' finalis, ranking = Juara 1, 2, 3</span>');
   $('#fixedRounds').innerHTML=fx.join('');
 }
 const nmHTML=(id,tag)=>{const s=shopOf(id);return '<span class="nm"><span class="nm-l"><span class="nm-t" title="'+esc(fullOf(id))+'">'+esc(nameOf(id))+'</span></span>'+((s||tag)?'<span class="nm-sl">'+(tag||'')+(s?'<span class="nm-s">'+esc(s)+'</span>':'')+'</span>':'')+'</span>'};
@@ -489,7 +518,7 @@ function renderBoard(sim){
   const fin=rs[rs.length-1],fev=fin.evals[0];
   if(fev.ready&&fev.determined>0){
     const rest=fev.order.slice(1,fev.determined).map((id,i)=>'Juara '+(i+2)+': '+esc(fullOf(id))).join('<br>');const cs=shopOf(fev.order[0]);
-    $('#champ').innerHTML='<div class="champ"><span class="crown-big">'+CROWN+'</span><div><small>Juara Tarung Tiga Stoa</small><strong>'+esc(nameOf(fev.order[0]))+'</strong>'+(cs?'<em>'+esc(cs)+'</em>':'')+'</div><div class="rest">'+rest+'</div></div>';
+    $('#champ').innerHTML='<div class="champ"><span class="crown-big">'+CROWN+'</span><div><small>Juara Stoa Fun Brewing Competition</small><strong>'+esc(nameOf(fev.order[0]))+'</strong>'+(cs?'<em>'+esc(cs)+'</em>':'')+'</div><div class="rest">'+rest+'</div></div>';
   }else $('#champ').innerHTML='';
   $('#llp').innerHTML=rs.filter(rd=>rd.tieGroup).map(rd=>{
     const tg=rd.tieGroup,unit=st.judges?' suara':'',sel=tg.sel||(st.llPick[rd.sp.short]||[]).filter(id=>tg.cands.includes(id));
@@ -543,7 +572,7 @@ async function importFile(f){
 }
 function scheduleText(){
   const sim=simulate(),rs=sim.rounds.filter(r=>!r.skipped);
-  const L=['TARUNG TIGA STOA · Fun Brewing Battle',sim.N+' peserta · Final 3 orang'+(st.semi&&sim.N>st.final?' · Semifinal '+Math.min(sim.N,eOf())+' orang':''),''];
+  const L=['STOA FUN BREWING COMPETITION',sim.N+' peserta · Final 3 orang'+(st.semi&&sim.N>st.final?' · Semifinal '+Math.min(sim.N,eOf())+' orang':''),''];
   rs.forEach(rd=>{L.push('== '+rd.sp.label.toUpperCase()+(rd.sp.kind==='final'?'':' ('+rd.H+' heat, '+rd.n+' → '+rd.T+')')+' ==');
     rd.heats.forEach((h,hi)=>{const ns=h.map(m=>{if(m.id==null)return '['+m.ph+']';const s=(st.res[rd.sp.short]||{})[m.id];return fullOf(m.id)+(s&&s.s!==''&&s.s!=null?' ['+s.s+']':'')});
       L.push((rd.sp.kind==='final'?'Final':'H'+(hi+1))+': '+(h.length===1?ns[0]+' (bye)':ns.join(' vs ')))});
@@ -551,7 +580,7 @@ function scheduleText(){
   const f=rs[rs.length-1].evals[0];if(f.ready&&f.determined)L.push('JUARA: '+f.order.slice(0,f.determined).map((id,i)=>(i+1)+'. '+fullOf(id)).join(' | '));
   return L.join('\n').trim();
 }
-function firstGroups(order){const r=simulate().rounds.find(x=>!x.skipped);if(!r)return[order];return r.sp.H?distribute(order,r.H):splitBy(order,heatSizes(order.length))}
+function firstGroups(order){const keep=st.order;st.order=order;const r=simulate().rounds.find(x=>!x.skipped);st.order=keep;if(!r)return[order];return r.heats.map(h=>h.map(m=>m.id).filter(x=>x!=null))}
 function clashes(order){let c=0;firstGroups(order).forEach(h=>{const seen={};h.forEach(id=>{const s=shopOf(id).toLowerCase();if(!s)return;if(seen[s])c++;seen[s]=1})});return c}
 function drawOrder(){let best=null,bc=1e9;for(let i=0;i<400&&bc>0;i++){const o=shuffleArr([...Array(st.count).keys()]),c=clashes(o);if(c<bc){bc=c;best=o}}return{order:best,clash:bc}}
 
@@ -567,6 +596,8 @@ $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importFi
 $('#shuffle').addEventListener('click',()=>{const d=drawOrder();st.order=d.order;const had=hasScores();st.res={};st.live=null;save();render();
   toast((had?'Undian baru, skor direset. ':'Undian diacak. ')+(d.clash?d.clash+' heat babak awal masih berisi rekan satu coffeeshop':'Tidak ada rekan satu coffeeshop di heat yang sama'))});
 $('#seed').addEventListener('click',()=>{st.order=[...Array(st.count).keys()];st.res={};st.live=null;save();render();toast('Heat disusun sesuai urutan daftar')});
+$('#segMode').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;st.mode=b.dataset.mode;if(st.mode==='classic'&&!st.rows.length)autoPlan();planChanged()});
+$('#tchips').addEventListener('click',e=>{const b=e.target.closest('[data-target]');if(!b)return;st.target=+b.dataset.target;planChanged()});
 $('#segJudge').addEventListener('click',e=>{const b=e.target.closest('[data-j]');if(!b)return;st.judges=+b.dataset.j;save();render()});
 $('#segRem').addEventListener('click',e=>{const b=e.target.closest('[data-rem]');if(!b)return;st.rem=b.dataset.rem;autoPlan();planChanged()});
 $('#segSemi').addEventListener('click',e=>{const b=e.target.closest('[data-semi]');if(!b)return;st.semi=+b.dataset.semi;autoPlan();planChanged()});
@@ -613,6 +644,8 @@ let armed=null;$('#reset').addEventListener('click',e=>{const b=e.currentTarget;
   clearTimeout(armed);armed=null;b.textContent='Reset skor';b.classList.remove('armed');st.res={};st.live=null;st.llPick={};st.llDraw={};save();render();toast('Semua skor dihapus')});
 
 if(!st.rows.length&&st.count>eOf())autoPlan();
+/* layar peserta selalu di root situs; saat dibuka dari file lokal pakai index.html */
+$('#openDisplay').href=location.protocol==='file:'?'index.html':location.origin+'/';
 render();initSync();
 })();
 </script>
