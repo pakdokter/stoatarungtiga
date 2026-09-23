@@ -7,7 +7,7 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', updated: 0 };
+    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
@@ -18,6 +18,9 @@
     if (!o.res || typeof o.res !== 'object') o.res = {};
     if (!['all', 'done', 'none'].includes(o.showScores)) o.showScores = 'done';
     if (o.live && (typeof o.live.k !== 'string' || !(o.live.h >= 0))) o.live = null;
+    o.judges = [0, 3, 5].includes(+o.judges) ? +o.judges : 3;
+    if (!o.llPick || typeof o.llPick !== 'object') o.llPick = {};
+    if (!o.llDraw || typeof o.llDraw !== 'object') o.llDraw = {};
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];
     return o;
@@ -61,14 +64,16 @@
       const ids = members.map(m => m.id);
       const sc = id => { const v = res[id] && res[id].s; const x = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(x) ? x : null; };
       if (ids.length === 1) return { ready: true, order: ids, determined: 1, complete: true, tie: false, sc, bye: true };
-      const pick = ids.find(id => res[id] && res[id].w);
-      const rest = ids.filter(id => id !== pick).sort((x, y) => { const a = sc(x), b = sc(y); if (a == null && b == null) return 0; if (a == null) return 1; if (b == null) return -1; return b - a; });
-      const order = pick != null ? [pick, ...rest] : rest;
+      /* mahkota = peringkat manual (1, 2, ...) untuk memecah seri; true dari versi lama dianggap 1 */
+      const rk = id => { const w = res[id] && res[id].w; return w === true ? 1 : (+w > 0 ? +w : 0); };
+      const manual = ids.filter(id => rk(id) > 0).sort((x, y) => rk(x) - rk(y));
+      const rest = ids.filter(id => !rk(id)).sort((x, y) => { const a = sc(x), b = sc(y); if (a == null && b == null) return 0; if (a == null) return 1; if (b == null) return -1; return b - a; });
+      const order = manual.concat(rest), m = manual.length, pick = manual[0];
       const complete = ids.every(id => sc(id) != null);
       let determined = 0, tie = false;
-      if (complete) { determined = order.length; for (let i = pick != null ? 1 : 0; i < order.length - 1; i++) { if (sc(order[i]) === sc(order[i + 1])) { determined = i; tie = true; break; } } }
-      else if (pick != null) determined = ids.length === 2 ? 2 : 1;
-      return { ready: true, order, determined, complete, tie, sc, pick };
+      if (complete) { determined = order.length; for (let i = m; i < order.length - 1; i++) { if (sc(order[i]) === sc(order[i + 1])) { determined = i; tie = true; break; } } }
+      else { determined = m; if (ids.length - m === 1) determined = ids.length; }
+      return { ready: true, order, determined, complete, tie, sc, pick, manual: m, rk };
     }
 
     function simulate() {
@@ -97,22 +102,36 @@
         });
         const r = T - a * H + short; rd.a = a; rd.r = r; let poolDone = true;
         if (r > 0) {
-          const ready = evals.every(e => e.ready && e.complete && !(e.tie && e.determined <= a)); let picks = null;
+          /* kursi sisa: skor tertinggi di antara yang belum lolos (a=0: di antara juara heat) */
+          const needW = hi => a === 0 ? 1 : Math.min(a, heats[hi].length);
+          const ready = evals.every((e, hi) => e.ready && e.complete && e.determined >= needW(hi));
+          let picks = null;
           if (ready) {
             const pool = [];
-            heats.forEach((hm, hi) => { const ev = evals[hi], k = Math.min(a, hm.length); ev.order.slice(k).forEach((id, j) => pool.push({ id, rank: j + k, s: ev.sc(id) })); });
-            pool.sort((x, y) => x.rank - y.rank || ((y.s == null ? -1e9 : y.s) - (x.s == null ? -1e9 : x.s)));
-            if (pool.length > r && pool[r - 1].rank === pool[r].rank && pool[r - 1].s === pool[r].s) rd.tieCut = true; else picks = pool.slice(0, r);
+            heats.forEach((hm, hi) => { const ev = evals[hi]; (a === 0 ? ev.order.slice(0, 1) : ev.order.slice(Math.min(a, hm.length))).forEach(id => pool.push({ id, s: ev.sc(id) })); });
+            const val = p => p.s == null ? -1e9 : p.s;
+            pool.sort((x, y) => val(y) - val(x));
+            if (pool.length <= r) picks = pool;
+            else {
+              const cut = val(pool[r - 1]), above = pool.filter(p => val(p) > cut), tied = pool.filter(p => val(p) === cut), need = r - above.length;
+              if (tied.length === need) picks = above.concat(tied);
+              else {
+                const tg = rd.tieGroup = { need, score: pool[r - 1].s, cands: tied.map(p => p.id), above: above.map(p => p.id), resolved: false, draw: !!st.llDraw[sp.short] };
+                const sel = st.llPick[sp.short];
+                if (Array.isArray(sel) && sel.length === need && sel.every(id => tg.cands.includes(id))) { tg.resolved = true; tg.sel = sel.slice(); picks = above.concat(tied.filter(p => sel.includes(p.id))); }
+                else above.forEach(p => { next.push({ id: p.id }); rd.status.set(p.id, 'll'); });
+              }
+            }
           }
           if (picks) picks.forEach(p => { next.push({ id: p.id }); rd.status.set(p.id, 'll'); });
-          else { poolDone = false; for (let j = 0; j < r; j++) next.push({ ph: (a === 0 ? 'Skor terbaik ' : 'Lucky loser ') + sp.short + ' #' + (j + 1) }); }
+          else { poolDone = false; const have = rd.tieGroup ? rd.tieGroup.above.length : 0; for (let j = have; j < r; j++) next.push({ ph: (a === 0 ? 'Skor terbaik ' : 'Lucky loser ') + sp.short + ' #' + (j + 1) }); }
         }
         heats.forEach((hm, hi) => { if (evals[hi].ready && advDone[hi] && poolDone) hm.forEach(m => { if (!rd.status.has(m.id)) rd.status.set(m.id, 'out'); }); });
         const byes = heats.filter(h => h.length === 1).length, twos = heats.filter(h => h.length === 2).length;
         if (byes) rd.notes.push(byes + ' bye (' + n + ' tidak habis dibagi 3)');
         if (twos) rd.notes.push(twos + ' heat isi 2');
         if (a === 0) rd.notes.push((H - T) + ' juara heat dgn skor terendah gugur');
-        else { if (a > 1) rd.notes.push(a + ' teratas tiap heat lolos'); if (r > 0) rd.notes.push('+' + r + ' lucky loser (' + (a === 1 ? 'runner-up' : 'peringkat ' + (a + 1)) + ' skor tertinggi)'); }
+        else { if (a > 1) rd.notes.push(a + ' teratas tiap heat lolos'); if (r > 0) rd.notes.push('+' + r + ' lucky loser (skor tertinggi yang tidak lolos)'); }
         if (!rd.notes.length) rd.notes.push('Juara tiap heat lolos');
         rounds.push(rd); ent = next;
       }
@@ -124,20 +143,22 @@
       const hm = rd.heats[hi], ev = rd.evals[hi], isF = rd.sp.kind === 'final', size = hm.length;
       if (!ev.ready) return 'wait';
       if (size === 1) return 'bye';
-      const done = isF ? ev.determined >= size : hm.every(m => rd.status.has(m.id));
-      if (done) return 'done';
-      if (ev.tie) return 'tie';
-      if (!isF && rd.tieCut && ev.complete) return 'tiecut';
-      if (!isF && ev.complete && rd.r > 0) return 'waitpool';
-      return 'play';
+      if (isF) { if (ev.determined >= size) return 'done'; return ev.complete && ev.tie ? 'tie' : 'play'; }
+      if (hm.every(m => rd.status.has(m.id))) return 'done';
+      const needW = rd.a === 0 ? 1 : Math.min(rd.a, size);
+      if (ev.complete && ev.determined < needW) return 'tie';
+      if (!ev.complete) return 'play';
+      if (rd.tieGroup && !rd.tieGroup.resolved) return 'tiecut';
+      return 'waitpool';
     }
     /* heat yang tampil sebagai LIVE: dipilih admin, atau otomatis heat berikutnya yang belum selesai */
     function liveOf(sim, pinned) {
       const rs = sim.rounds.filter(r => !r.skipped);
       const p = pinned === undefined ? S().live : pinned;
       if (p) { const ri = rs.findIndex(r => r.sp.short === p.k); if (ri >= 0 && p.h < rs[ri].heats.length) return { ri, hi: p.h, pinned: true }; }
-      for (const want of [['play', 'tie'], ['tiecut']]) {
-        for (let ri = 0; ri < rs.length; ri++) for (let hi = 0; hi < rs[ri].heats.length; hi++) if (want.includes(heatState(rs[ri], hi))) return { ri, hi, pinned: false };
+      /* babak demi babak: heat yang dimainkan/seri dulu, lalu penentuan lucky loser, baru babak berikutnya */
+      for (let ri = 0; ri < rs.length; ri++) {
+        for (const want of [['play', 'tie'], ['tiecut']]) for (let hi = 0; hi < rs[ri].heats.length; hi++) if (want.includes(heatState(rs[ri], hi))) return { ri, hi, pinned: false };
       }
       for (let ri = 0; ri < rs.length; ri++) for (let hi = 0; hi < rs[ri].heats.length; hi++) if (heatState(rs[ri], hi) === 'wait') return { ri, hi, pinned: false };
       return { ri: rs.length - 1, hi: 0, pinned: false, finished: true };
