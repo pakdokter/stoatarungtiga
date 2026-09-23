@@ -7,7 +7,7 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, updated: 0 };
+    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
@@ -21,6 +21,8 @@
     o.judges = [0, 3, 5].includes(+o.judges) ? +o.judges : 3;
     if (!o.llPick || typeof o.llPick !== 'object') o.llPick = {};
     if (!o.llDraw || typeof o.llDraw !== 'object') o.llDraw = {};
+    o.mode = o.mode === 'classic' ? 'classic' : 'playin';
+    o.target = Math.max(0, Math.round(+o.target) || 0);
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];
     return o;
@@ -59,6 +61,22 @@
     }
     function autoPlan() { const st = S(); const c = candidates(st.count, eOf()); st.rows = c.length ? c[0].rows.map(r => ({ ...r })) : []; }
 
+    /* Sistem kualifikasi: bracket inti selalu pangkat 3 (9, 27, 81) supaya tanpa lucky loser */
+    function qualPlan(N, P) {
+      const x = N - P; if (x <= 0) return { P, x: 0, nh: 0, sizes: [], adv: [], auto: N, slots: 0 };
+      let q1 = Math.floor(x / 2), q2 = x % 2; const sizes = [], adv = [];
+      for (let i = 0; i < q1; i++) { sizes.push(3); adv.push(1); }
+      if (q2) { if (3 * (q1 + 1) <= N) { sizes.push(3); adv.push(2); } else { sizes.push(2); adv.push(1); } }
+      const nq = sizes.reduce((a, b) => a + b, 0);
+      return { P, x, nh: sizes.length, sizes, adv, auto: N - nq, slots: adv.reduce((a, b) => a + b, 0) };
+    }
+    function validTargets(N) {
+      const E = eOf(), out = [];
+      for (let p = 3; p <= 729; p *= 3) if (p >= E && p <= N && N <= 3 * p) out.push(p);
+      return out.reverse();
+    }
+    function targetOf(N) { const st = S(), v = validTargets(N); return v.includes(st.target) ? st.target : (v[0] || 0); }
+
     function evalHeat(members, res) {
       if (members.some(m => m.id == null)) return { ready: false };
       const ids = members.map(m => m.id);
@@ -78,12 +96,43 @@
 
     function simulate() {
       const st = S(), N = st.count, F = st.final, E = eOf(), specs = [];
-      if (N > E) st.rows.forEach((r, i) => specs.push({ kind: 'pre', label: 'Babak ' + (i + 1), short: 'B' + (i + 1), h: 3, T: i === st.rows.length - 1 ? E : r.T, row: i }));
+      if (st.mode === 'playin') {
+        const P = N > E ? targetOf(N) : 0;
+        if (P) {
+          if (N > P) specs.push({ kind: 'qual', label: 'Kualifikasi', short: 'Q', P });
+          for (let n = P; n > E; n /= 3) specs.push({ kind: 'pre', label: n + ' Besar', short: 'B' + n, h: 3, T: n / 3, main: true });
+        }
+      } else if (N > E) st.rows.forEach((r, i) => specs.push({ kind: 'pre', label: 'Babak ' + (i + 1), short: 'B' + (i + 1), h: 3, T: i === st.rows.length - 1 ? E : r.T, row: i }));
       if (st.semi && N > F) specs.push({ kind: 'semi', label: 'Semifinal', short: 'SF', H: F, T: F });
       specs.push({ kind: 'final', label: 'Final', short: 'FN', H: 1, T: 0 });
       let ent = st.order.map(id => ({ id })); const rounds = [];
       for (const sp of specs) {
         const n = ent.length;
+        if (sp.kind === 'qual') {
+          const qp = qualPlan(n, sp.P), ids = ent.map(e => e.id), autoIds = ids.slice(0, qp.auto);
+          const heats = splitBy(ids.slice(qp.auto).map(id => ({ id })), qp.sizes), res = st.res.Q || {};
+          const evals = heats.map(h => evalHeat(h, res));
+          const rd = { sp, n, H: heats.length, T: sp.P, heats, evals, status: new Map(), notes: [], warn: '', a: 1, r: 0, advPer: qp.adv, auto: autoIds };
+          const slots = [];
+          heats.forEach((hm, hi) => {
+            const ev = evals[hi], k = Math.min(qp.adv[hi], hm.length); let done = true;
+            for (let j = 0; j < k; j++) {
+              if (ev.ready && ev.determined > j) { const id = ev.order[j]; slots.push({ id }); rd.status.set(id, 'win'); }
+              else { done = false; slots.push({ ph: k === 1 ? 'Juara Q-H' + (hi + 1) : '#' + (j + 1) + ' Q-H' + (hi + 1) }); }
+            }
+            if (done && ev.ready) hm.forEach(m => { if (!rd.status.has(m.id)) rd.status.set(m.id, 'out'); });
+          });
+          /* sebar slot pemenang kualifikasi merata ke heat babak inti, sisanya diisi peserta auto lolos */
+          const H1 = sp.P / 3, buckets = Array.from({ length: H1 }, () => []);
+          slots.forEach((sl, i) => buckets[i % H1].push(sl));
+          let ai = 0; buckets.forEach(b => { while (b.length < 3 && ai < autoIds.length) b.unshift({ id: autoIds[ai++] }); });
+          const q1 = qp.adv.filter((v, i) => v === 1 && qp.sizes[i] === 3).length, q2 = qp.adv.filter(v => v === 2).length, q3 = qp.sizes.filter(z => z === 2).length;
+          rd.notes.push(qp.auto + ' auto lolos ke ' + sp.P + ' besar');
+          if (q1) rd.notes.push(q1 + ' heat: juara lolos');
+          if (q2) rd.notes.push(q2 + ' heat: 2 teratas lolos');
+          if (q3) rd.notes.push(q3 + ' heat isi 2: juara lolos');
+          rounds.push(rd); ent = buckets.flat(); continue;
+        }
         if (sp.kind !== 'final' && n <= sp.T) { rounds.push({ sp, skipped: true, n }); continue; }
         const heats = sp.H ? distribute(ent, Math.max(1, Math.min(n, sp.H))) : splitBy(ent, heatSizes(n));
         const H = heats.length, res = st.res[sp.short] || {};
@@ -145,7 +194,7 @@
       if (size === 1) return 'bye';
       if (isF) { if (ev.determined >= size) return 'done'; return ev.complete && ev.tie ? 'tie' : 'play'; }
       if (hm.every(m => rd.status.has(m.id))) return 'done';
-      const needW = rd.a === 0 ? 1 : Math.min(rd.a, size);
+      const needW = rd.advPer ? Math.min(rd.advPer[hi], size) : rd.a === 0 ? 1 : Math.min(rd.a, size);
       if (ev.complete && ev.determined < needW) return 'tie';
       if (!ev.complete) return 'play';
       if (rd.tieGroup && !rd.tieGroup.resolved) return 'tiecut';
@@ -165,7 +214,7 @@
     }
     const heatLabel = (rd, hi) => rd.sp.kind === 'final' ? 'Final' : rd.sp.short + '-H' + (hi + 1);
 
-    return { eOf, splitEntry, nameOf, shopOf, fullOf, kindName, distribute, splitBy, heatSizes, candidates, autoPlan, evalHeat, simulate, heatState, liveOf, heatLabel };
+    return { qualPlan, validTargets, targetOf, eOf, splitEntry, nameOf, shopOf, fullOf, kindName, distribute, splitBy, heatSizes, candidates, autoPlan, evalHeat, simulate, heatState, liveOf, heatLabel };
   }
 
   /* Sinkronisasi: server (Vercel + Upstash) bila tersedia, selain itu antar-tab di perangkat yang sama */
