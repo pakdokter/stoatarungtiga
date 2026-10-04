@@ -259,7 +259,8 @@ body.m-board .col-h{position:static}
 @media (orientation:landscape){body.m-board{height:100dvh;overflow:hidden}body.m-board .screen{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);padding-bottom:10px}}
 @media (orientation:landscape) and (max-height:520px){body.m-board .bar{padding-top:6px;padding-bottom:6px}body.m-board .eyebrow{display:none}body.m-board h1{font-size:22px;margin:0}body.m-board .now{padding:4px 12px;font-size:14px}}
 body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
-.tri-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;margin:0 auto;padding-top:14px}
+.tri-box{position:relative;margin:0 auto}
+.tri-wrap{position:absolute;left:0;top:0;width:max-content;display:flex;flex-direction:column;align-items:center;gap:16px;padding-top:14px;transform-origin:0 0}
 .tri{--gap:56px;--sib:18px;position:relative;isolation:isolate;display:grid;grid-template-columns:1fr auto 1fr;grid-template-areas:"left center right" "bottom bottom bottom";gap:var(--gap);align-items:center;justify-items:center}
 .tri-center{grid-area:center}
 .tri-center .hc{border-width:3px;border-color:var(--gold);width:260px}
@@ -473,7 +474,7 @@ function boardHTML(rs,mask){
     return '<div class="tn tn-'+dir+'">'+(ks.length?'<div class="tn-kids">'+ks.map(k=>node(k,dir)).join('')+'</div>':'')+'<div class="tn-node">'+card+'</div></div>'};
   const arm=(i,cls,dir)=>'<div class="tri-arm '+cls+'">'+node(ix(last)+'-'+i,dir)+'</div>';
   const note=qual?'<span class="tri-note">'+esc(qual.notes.join(' · '))+'</span>':'';
-  return '<div class="tri-wrap">'+note+'<div class="tri'+(rendered||mask?'':' enter')+'" data-links="'+esc(JSON.stringify(links))+'">'+arm(0,'a-left','l')+'<div class="tri-center">'+hcard(fin,0,false,mask,fi)+'</div>'+arm(1,'a-right','r')+arm(2,'a-bottom','b')+'</div></div>';
+  return '<div class="tri-box"><div class="tri-wrap">'+note+'<div class="tri'+(rendered||mask?'':' enter')+'" data-links="'+esc(JSON.stringify(links))+'">'+arm(0,'a-left','l')+'<div class="tri-center">'+hcard(fin,0,false,mask,fi)+'</div>'+arm(1,'a-right','r')+arm(2,'a-bottom','b')+'</div></div></div>';
 }
 /* posisi elemen relatif ke .tri dalam satuan layout (tidak terpengaruh zoom) */
 function posIn(el,root){let x=0,y=0,e=el;while(e&&e!==root){x+=e.offsetLeft;y+=e.offsetTop;e=e.offsetParent}return{l:x,t:y,r:x+el.offsetWidth,b:y+el.offsetHeight}}
@@ -542,8 +543,21 @@ function runFx(){
 let annT;function announce(k,t){$('#annK').textContent=k;$('#annT').textContent=t;const a=$('#announce');a.classList.add('show');clearTimeout(annT);annT=setTimeout(()=>a.classList.remove('show'),8000)}
 /* ---------- ukuran & gulir ---------- */
 function fitTo(sc,br){
-  br.style.zoom='';br.querySelectorAll('.tri').forEach(layoutTri);const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H||!aw||!ah)return;
-  let z=Math.min(1,aw/W,ah/H);if(ah>aw)z=Math.max(z,.65);/* HP tegak: tetap terbaca, sisanya digeser */
+  const box=br.querySelector('.tri-box');
+  if(box){
+    /* bagan tiga arah: diskalakan dengan transform (konsisten di semua browser HP), garis digambar pada ukuran asli */
+    const wrap=box.firstElementChild;wrap.style.transform='';box.style.width=box.style.height='';
+    wrap.querySelectorAll('.tri').forEach(layoutTri);
+    const W=wrap.offsetWidth,H=wrap.offsetHeight,cs=getComputedStyle(br),
+      aw=sc.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),ah=sc.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+    if(!W||!H||aw<=0)return;
+    let z;
+    if(ah<50)z=Math.max(Math.min(1,aw/W),.65);/* halaman HP tegak: tinggi bebas, lebar dipaskan, sisanya digeser */
+    else{z=Math.min(1,aw/W,ah/H);if(ah>aw+36)z=Math.max(z,.65)}
+    wrap.style.transform='scale('+z.toFixed(4)+')';box.style.width=(W*z)+'px';box.style.height=(H*z)+'px';return;
+  }
+  br.style.zoom='';const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H||!aw||!ah)return;
+  let z=Math.min(1,aw/W,ah/H);if(ah>aw)z=Math.max(z,.65);
   br.style.zoom=z.toFixed(3);
 }
 function fit(){
