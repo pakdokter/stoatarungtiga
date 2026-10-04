@@ -207,7 +207,7 @@ body.m-final:not(.finished) .spot{display:none}
 /* cadangan tanpa View Transitions */
 .zoom-round{animation:zin .75s var(--ease) both}
 .zoom-heat{animation:zcard .6s var(--ease) both}
-@keyframes zin{from{opacity:0;transform:scale(.86);filter:blur(6px)}}
+@keyframes zin{from{opacity:0;transform:scale(.94)}}
 @keyframes zcard{from{opacity:0;transform:scale(.72)}}
 
 /* transisi: zoom saat heat dan babak berganti */
@@ -223,8 +223,8 @@ html[data-vt="round"]::view-transition-old(root){animation:vt-zout-root .5s var(
 html[data-vt="round"]::view-transition-new(root){animation:vt-zin-root .8s var(--ease) both}
 @keyframes vt-zin{from{opacity:0;transform:scale(.7)}}
 @keyframes vt-zout{to{opacity:0;transform:scale(1.25)}}
-@keyframes vt-zout-root{to{opacity:0;transform:scale(1.18);filter:blur(8px)}}
-@keyframes vt-zin-root{from{opacity:0;transform:scale(.84);filter:blur(8px)}}
+@keyframes vt-zout-root{to{opacity:0;transform:scale(1.08)}}
+@keyframes vt-zin-root{from{opacity:0;transform:scale(.94)}}
 
 .announce{position:fixed;left:50%;top:calc(18px + env(safe-area-inset-top,0px));z-index:15;transform:translate(-50%,calc(-100% - 60px));visibility:hidden;display:flex;align-items:center;gap:14px;max-width:calc(100% - 32px);padding:14px 22px;border-radius:14px;background:var(--gold-fill);color:var(--ink);border:3px solid var(--gold);box-shadow:0 18px 50px -12px rgba(10,36,16,.5);transition:transform .7s var(--ease),visibility 0s linear .7s}
 .announce.show{transform:translate(-50%,0);visibility:visible;transition:transform .7s var(--ease),visibility 0s}
@@ -255,7 +255,10 @@ html[data-vt="round"]::view-transition-new(root){animation:vt-zin-root .8s var(-
 body.m-board #steps,body.m-board #spot{display:none}
 @media (min-width:900px) and (min-height:600px){body.m-board .screen{grid-template-rows:auto minmax(0,1fr)}}
 body.m-board .col{opacity:1!important;filter:none!important}
-body.m-board .sl-n,body.m-board .sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+body.m-board .col-h{position:static}
+@media (orientation:landscape){body.m-board{height:100dvh;overflow:hidden}body.m-board .screen{height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr);padding-bottom:10px}}
+@media (orientation:landscape) and (max-height:520px){body.m-board .bar{padding-top:6px;padding-bottom:6px}body.m-board .eyebrow{display:none}body.m-board h1{font-size:22px;margin:0}body.m-board .now{padding:4px 12px;font-size:14px}}
+body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
 .tri{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:18px 10px;align-items:center;justify-items:center;margin:0 auto;padding-top:14px}
 .tri-top{grid-area:top;display:flex;flex-direction:column;align-items:center;gap:6px}
 .tri-center{grid-area:center;display:flex;flex-direction:column;align-items:center;gap:6px}
@@ -269,39 +272,36 @@ body.m-board .sl-n,body.m-board .sl-s{white-space:normal;overflow:visible;text-o
 .tri .hc{width:232px;flex:none}
 .tri-lab{font-size:15px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--green)}
 .tri-ar{font-size:30px;font-weight:900;line-height:1;color:var(--green)}
+.tri{isolation:isolate}.tri.enter .tri-blk,.tri.enter .tri-center{animation:rise .7s var(--ease) both}
 .tri-note{max-width:min(90vw,700px);text-align:center;font-size:13.5px;font-weight:600;color:var(--muted)}
 @media (max-width:899px){.sl-n,.sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}.dp,.ds{overflow-wrap:anywhere}}
 
-/* tayangan undian */
-.draw-ov{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));background:var(--green);color:#FFFFFF;opacity:0;transition:opacity .5s ease}
+/* tayangan undian: nama dulu, lalu diundi ke bagan lengkap */
+.draw-ov{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--green);color:#FFFFFF;opacity:0;transition:opacity .5s ease}
 .draw-ov.show{opacity:1}
 .dr-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.dr-eb{display:block;font-size:14px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-fill)}
-.dr-head h2{margin:0;font-size:clamp(30px,4vw,56px);font-weight:900;line-height:1;text-transform:uppercase}
+.dr-eb{display:block;font-size:13px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-fill)}
+.dr-head h2{margin:0;font-size:clamp(24px,3.4vw,48px);font-weight:900;line-height:1;text-transform:uppercase}
 #drSkip{flex:none;padding:8px 16px;border-radius:99px;border:2px solid #FFFFFF;background:transparent;color:#FFFFFF;font:inherit;font-weight:800;cursor:pointer}
-.dr-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:14px}
-.draw-ov:not(.p2) .dr-body{grid-template-rows:minmax(0,1fr)}
-@media (min-width:900px){.draw-ov.p2 .dr-body{grid-template-columns:minmax(260px,30%) 1fr;grid-template-rows:minmax(0,1fr)}}
-.dr-pool{overflow:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;justify-content:center;scrollbar-width:thin}
-.draw-ov.p2 .dr-pool{justify-content:flex-start;max-height:26vh}
-@media (min-width:900px){.draw-ov.p2 .dr-pool{max-height:none}}
+.dr-body{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px}
+.dr-pool{flex:1 1 100%;min-height:0;overflow:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;justify-content:center;transition:flex-basis .7s var(--ease);scrollbar-width:thin}
+.dr-board{flex:0 1 0%;min-height:0;min-width:0;overflow:auto;border-radius:14px;background:var(--panel);color:var(--ink);opacity:0;transition:flex-basis .7s var(--ease),opacity .5s ease;scrollbar-width:thin}
+.draw-ov.p2 .dr-pool{flex-basis:22%;justify-content:flex-start;align-content:flex-start}
+.draw-ov.p2 .dr-board{flex-basis:78%}
+.draw-ov.bd .dr-board{opacity:1}
+@media (min-width:700px) and (orientation:landscape){.dr-body{flex-direction:row}}
+.dr-board .bracket{padding:8px;gap:0}
+.dr-board .col-h{position:static}
 .dp{display:flex;flex-direction:column;line-height:1.15;padding:7px 14px;border-radius:10px;background:#FFFFFF;color:var(--ink);transition:opacity .5s,transform .5s var(--ease);animation:rise .5s var(--ease) both;animation-delay:var(--d,0ms)}
-.dp b{font-size:clamp(16px,1.8vw,26px);font-weight:800}
+.dp b{font-size:clamp(16px,1.8vw,26px);font-weight:800;overflow-wrap:anywhere}
 .dp i{font-style:normal;font-size:clamp(12px,1.2vw,16px);font-weight:600;color:var(--muted)}
-.draw-ov.p2 .dp b{font-size:15px}.draw-ov.p2 .dp i{font-size:12px}
+.draw-ov.p2 .dp{padding:4px 9px}.draw-ov.p2 .dp b{font-size:13px}.draw-ov.p2 .dp i{font-size:11px}
 .dp.used{opacity:.25;transform:scale(.94)}
-.dr-heats{display:none}
-.draw-ov.p2 .dr-heats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;align-content:start;overflow:auto;scrollbar-width:thin}
-.dh{background:#FFFFFF;color:var(--ink);border-radius:12px;overflow:hidden;animation:rise .5s var(--ease) both}
-.dh h3{margin:0;padding:6px 12px;background:var(--gold-fill);font-size:14px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
-.dh ol{list-style:none;margin:0;padding:0}
-.ds{min-height:52px;padding:6px 12px;border-top:2px solid var(--tint);display:flex;flex-direction:column;justify-content:center;line-height:1.15}
-.ds>span{font-size:18px;font-weight:700;color:var(--line2)}
-.ds.spin>span{color:var(--green);font-style:italic}
-.ds b{font-size:19px;font-weight:900}
-.ds i{font-style:normal;font-size:13px;font-weight:600;color:var(--muted)}
-.ds.set{animation:lock .45s var(--ease)}
-@keyframes lock{from{transform:scale(1.06);background:var(--gold-fill)}}
+.sl.mask .sl-n{color:var(--line2);font-weight:700;font-size:18px}
+.sl.spin .sl-n{color:var(--green);font-style:italic}
+.sl.set{animation:lock .7s var(--ease)}
+@keyframes lock{from{background:var(--gold-fill)}}
+.hc.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.8),var(--shadow)}
 
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
@@ -322,7 +322,7 @@ body.m-board .sl-n,body.m-board .sl-s{white-space:normal;overflow:visible;text-o
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Stoa Fun Brewing Competition"></div>
 <div class="draw-ov" id="draw" hidden role="dialog" aria-label="Undian heat">
   <div class="dr-head"><div><span class="dr-eb">Stoa Fun Brewing Competition</span><h2 id="drT">Peserta</h2></div><button id="drSkip" type="button">Lewati</button></div>
-  <div class="dr-body"><div class="dr-pool" id="drPool"></div><div class="dr-heats" id="drHeats"></div></div>
+  <div class="dr-body"><div class="dr-pool" id="drPool"></div><div class="dr-board" id="drBoard"><div class="bracket" id="drBr"></div></div></div>
 </div>
 <canvas id="confetti" hidden></canvas>
 <div class="announce" id="announce" role="status" aria-live="polite"><b id="annK"></b><span id="annT"></span></div>
@@ -425,10 +425,12 @@ function renderSpot(rs,lv,finished){
   $('#spot').innerHTML='<div class="spot-l"><span class="spot-lab '+lab[0]+'"><i></i>'+lab[1]+'</span><strong class="spot-t">'+title+'</strong><span class="spot-s">'+sub+'</span></div>'+
     '<div class="spot-cards n'+hm.length+'">'+hm.map((m,i)=>spotCard(rd,m,i,show)).join('')+'</div>';
 }
-function hcard(rd,hi,live){
+function hcard(rd,hi,live,mask,ri){
   const hm=rd.heats[hi],state=E.heatState(rd,hi),show=showScore(rd,hi),key=rd.sp.short;
   const lis=hm.map((m,i)=>{
     const pos=key+'-'+hi+'-'+i;
+    if(mask&&m.id!=null)return '<li class="sl mask" data-did="'+m.id+'" data-ord="'+(ri*1e7+hi*1000+i)+'"><span class="sl-t"><span class="sl-n">?</span><span class="sl-s">\u00a0</span></span></li>';
+    if(mask)return '<li class="sl ph"><span class="sl-t"><span class="sl-n">'+esc(m.ph)+'</span></span></li>';
     if(m.id==null)return '<li class="sl ph" data-pos="'+pos+'" data-sig="ph~'+esc(m.ph)+'"><span class="sl-t"><span class="sl-n">'+esc(m.ph)+'</span></span></li>';
     const id=m.id,s=hm.length===1?'win':(rd.status.get(id)||''),sc=show&&hm.length>1?scoreOf(key,id):'';
     const ic=s==='win'?'✓':s==='ll'?'LL':s[0]==='p'?s[1]:'';
@@ -438,26 +440,33 @@ function hcard(rd,hi,live){
   const chip=live?'<span class="chip live">LIVE</span>':state==='done'?'<span class="chip done">SELESAI</span>':state==='bye'?'<span class="chip bye">BYE</span>':'';
   return '<article class="hc st-'+state+(live?' live':'')+'">'+(live?'<span class="ring" aria-hidden="true"></span>':'')+'<header class="hc-h"><span class="hc-id">'+(rd.sp.kind==='final'?'FINAL':'H'+(hi+1))+'</span>'+chip+'</header><ol>'+lis+'</ol></article>';
 }
-function renderBracket(rs,lv,finished){
-  $('#bracket').innerHTML=rs.map((rd,ri)=>{
+function renderBracket(rs,lv,finished){$('#bracket').innerHTML=bracketHTML(rs,lv,finished,false)}
+function bracketHTML(rs,lv,finished,mask){
+  return rs.map((rd,ri)=>{
     const cls=finished?(rd.sp.kind==='final'?'is-live':'is-done'):ri===lv.ri?'is-live':roundDone(rd)?'is-done':'is-next';
     const meta=rd.sp.kind==='final'?rd.n+' finalis':rd.H+' heat · '+rd.n+' → '+rd.T;
-    return '<section class="col '+cls+' '+rd.sp.kind+(rendered?'':' reveal')+'" style="--i:'+ri+'"><header class="col-h"><h2>'+rd.sp.label+'</h2><p>'+meta+'</p></header><div class="col-heats">'+
-      rd.heats.map((h,hi)=>hcard(rd,hi,!finished&&ri===lv.ri&&hi===lv.hi&&E.heatState(rd,hi)!=='tiecut')).join('')+'</div></section>';
+    return '<section class="col '+cls+' '+rd.sp.kind+(rendered||mask?'':' reveal')+'" style="--i:'+ri+'"><header class="col-h"><h2>'+rd.sp.label+'</h2><p>'+meta+'</p></header><div class="col-heats">'+
+      rd.heats.map((h,hi)=>hcard(rd,hi,!finished&&ri===lv.ri&&hi===lv.hi&&E.heatState(rd,hi)!=='tiecut',mask,ri)).join('')+'</div></section>';
   }).join('');
 }
 
-/* bagan tiga arah: tiga heat semifinal (kiri, kanan, bawah) bertemu di Final tengah; kualifikasi di atas */
-function renderBoard(rs){
+/* bagan tiga arah: tiga heat semifinal (kiri, kanan, bawah) bertemu di Final tengah.
+   Heat babak sebelumnya ditaruh di sisi semifinal yang benar-benar diisinya (mis. Q-H1 dan Q-H4 di kiri SF-H1). */
+function boardHTML(rs,mask){
   const core=rs.filter(r=>r.sp.kind==='pre'||r.sp.kind==='semi'),qual=rs.find(r=>r.sp.kind==='qual'),fin=rs[rs.length-1],last=core[core.length-1];
-  if(!last||last.H!==3||fin.sp.kind!=='final'){renderBracket(rs,{ri:-1,hi:-1},false);return}
-  const arm=(i,cls,ar)=>'<div class="tri-arm '+cls+'">'+core.map(rd=>{
-    const a=Math.floor(i*rd.H/3),b=Math.floor((i+1)*rd.H/3);if(a>=b)return '';
-    let h='';for(let hi=a;hi<b;hi++)h+=hcard(rd,hi,false);
-    return '<div class="tri-blk"><span class="tri-lab">'+esc(rd.sp.label)+'</span><div class="tri-heats">'+h+'</div></div><span class="tri-ar" aria-hidden="true">'+ar+'</span>'}).join('')+'</div>';
-  const top=qual?'<div class="tri-top"><span class="tri-lab">Kualifikasi · '+qual.H+' heat</span><div class="tri-heats row">'+qual.heats.map((h,hi)=>hcard(qual,hi,false)).join('')+'</div><span class="tri-note">'+esc(qual.notes.join(' · '))+'</span><span class="tri-ar" aria-hidden="true">↓</span></div>':'';
-  $('#bracket').innerHTML='<div class="tri">'+top+arm(0,'a-left','→')+'<div class="tri-center"><span class="tri-lab">Final</span>'+hcard(fin,0,false)+'</div>'+arm(1,'a-right','←')+arm(2,'a-bottom','↑')+'</div>';
+  if(!last||last.H!==3||fin.sp.kind!=='final')return null;
+  const armOf=new Map([[last,[0,1,2]]]);
+  for(let c=core.length-2;c>=0;c--){const rd=core[c],nx=core[c+1],nm=armOf.get(nx),starts=[];let p=0;nx.heats.forEach(h=>{starts.push(p);p+=h.length});
+    const a=Math.max(1,rd.a||1);armOf.set(rd,rd.heats.map((h,hi)=>{let j=starts.length-1;while(j>0&&starts[j]>hi*a)j--;return nm[j]}))}
+  if(qual){const nm=armOf.get(core[0]);let n=0;armOf.set(qual,qual.heats.map((h,hi)=>{const arm=nm[n%nm.length];n+=qual.advPer[hi];return arm}))}
+  const rounds=qual?[qual].concat(core):core;
+  const arm=(i,cls,ar)=>'<div class="tri-arm '+cls+'">'+rounds.map(rd=>{
+    const am=armOf.get(rd),ri=rs.indexOf(rd);let h='';rd.heats.forEach((x,hi)=>{if(am[hi]===i)h+=hcard(rd,hi,false,mask,ri)});if(!h)return '';
+    return '<div class="tri-blk"><span class="tri-lab">'+(rd.sp.kind==='qual'?'Kualifikasi':esc(rd.sp.label))+'</span><div class="tri-heats">'+h+'</div></div><span class="tri-ar" aria-hidden="true">'+ar+'</span>'}).join('')+'</div>';
+  const top=qual?'<div class="tri-top"><span class="tri-note">'+esc(qual.notes.join(' · '))+'</span></div>':'';
+  return '<div class="tri'+(rendered||mask?'':' enter')+'">'+top+arm(0,'a-left','→')+'<div class="tri-center"><span class="tri-lab">Final</span>'+hcard(fin,0,false,mask,rs.length-1)+'</div>'+arm(1,'a-right','←')+arm(2,'a-bottom','↑')+'</div>';
 }
+function renderBoard(rs){const h=boardHTML(rs,false);if(h)$('#bracket').innerHTML=h;else renderBracket(rs,{ri:-1,hi:-1},false)}
 
 /* ---------- efek perubahan ---------- */
 function snapshotSig(){prevSig=new Map();document.querySelectorAll('[data-pos]').forEach(el=>prevSig.set(el.dataset.pos,el.dataset.sig))}
@@ -482,13 +491,20 @@ function runFx(){
 
 let annT;function announce(k,t){$('#annK').textContent=k;$('#annT').textContent=t;const a=$('#announce');a.classList.add('show');clearTimeout(annT);annT=setTimeout(()=>a.classList.remove('show'),8000)}
 /* ---------- ukuran & gulir ---------- */
+function fitTo(sc,br){
+  br.style.zoom='';const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H||!aw||!ah)return;
+  let z=Math.min(1,aw/W,ah/H);if(ah>aw)z=Math.max(z,.65);/* HP tegak: tetap terbaca, sisanya digeser */
+  br.style.zoom=z.toFixed(3);
+}
 function fit(){
-  const sc=$('#scroller'),br=$('#bracket');br.style.zoom='';
+  const sc=$('#scroller'),br=$('#bracket');
+  if(document.body.classList.contains('m-board')){fitTo(sc,br);return}
+  br.style.zoom='';
   if(!desk())return;
   const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H)return;
   const big=document.body.classList.contains('m-focus')||document.body.classList.contains('m-final');
   /* mode fokus/final: jangan perkecil demi tinggi, cukup gulir ke heat yang sedang bertanding */
-  let z=big?Math.min(1,aw/W):Math.min(1,aw/W,ah/H);if(document.body.classList.contains('m-board'))z=Math.min(1,aw/W,ah/H);else if(z<0.62)z=Math.max(0.62,Math.min(1,aw/W));
+  let z=big?Math.min(1,aw/W):Math.min(1,aw/W,ah/H);if(z<0.62)z=Math.max(0.62,Math.min(1,aw/W));
   br.style.zoom=z.toFixed(3);
 }
 function scrollToLive(instant){
@@ -496,7 +512,7 @@ function scrollToLive(instant){
   const sc=$('#scroller'),r=el.getBoundingClientRect(),s=sc.getBoundingClientRect();
   sc.scrollTo({left:sc.scrollLeft+r.left-s.left-(s.width-r.width)/2,top:(desk()||document.body.classList.contains('m-board'))?sc.scrollTop+r.top-s.top-(s.height-r.height)/2:0,behavior:instant||reduce?'auto':'smooth'});
 }
-let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fit();scrollToLive(true)},150)});
+let rt;addEventListener('orientationchange',()=>dispatchEvent(new Event('resize')));addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fit();scrollToLive(true);if(!$('#draw').hidden&&$('#drBr').firstChild)fitTo($('#drBoard'),$('#drBr'))},150)});
 
 /* ---------- juara ---------- */
 function champion(fin,finished){
@@ -526,34 +542,34 @@ function confetti(){
 /* ---------- tayangan undian: semua nama tampil, lalu diundi ke tiap heat ---------- */
 let lastShow=null,drawTok=0;
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function drawGroups(){
-  const rd=E.simulate().rounds.find(r=>!r.skipped),g=[];if(!rd)return g;
-  if(rd.auto&&rd.auto.length)g.push({label:'Auto lolos · '+rd.sp.P+' Besar',ids:rd.auto.slice()});
-  rd.heats.forEach((h,hi)=>g.push({label:rd.sp.kind==='final'?'Final':(rd.sp.kind==='qual'?'Kualifikasi':rd.sp.label)+' · Heat '+(hi+1),ids:h.map(m=>m.id).filter(x=>x!=null)}));
-  return g;
-}
 function closeDraw(){drawTok++;const ov=$('#draw');ov.classList.remove('show');setTimeout(()=>{if(!ov.classList.contains('show'))ov.hidden=true},500)}
 $('#drSkip').addEventListener('click',closeDraw);
+/* papan undian selalu muat di layar: hitung ulang saat ukuran kontainer berubah (animasi, putar layar) */
+if('ResizeObserver' in window)new ResizeObserver(()=>{const br=$('#drBr');if(br.firstChild)fitTo($('#drBoard'),br)}).observe($('#drBoard'));
+function keepVisible(c,el){const r=el.getBoundingClientRect(),b=c.getBoundingClientRect();if(r.top<b.top||r.bottom>b.bottom||r.left<b.left||r.right>b.right)el.scrollIntoView({block:'center',inline:'center',behavior:reduce?'auto':'smooth'})}
 async function playDraw(){
-  const tok=++drawTok,alive=()=>tok===drawTok,ov=$('#draw'),g=drawGroups(),all=[...Array(st.count).keys()];
-  const info=all.map(id=>({n:E.nameOf(id),s:E.shopOf(id)})),pool=$('#drPool'),heats=$('#drHeats');
-  hideChamp();ov.classList.remove('p2');$('#drT').textContent='Peserta ('+all.length+')';$('#drSkip').textContent='Lewati';
+  const tok=++drawTok,alive=()=>tok===drawTok,ov=$('#draw'),pool=$('#drPool'),bd=$('#drBoard'),br=$('#drBr');
+  const real=st,all=[...Array(real.count).keys()],info=all.map(id=>({n:E.nameOf(id),s:E.shopOf(id)}));
+  /* bagan awal tanpa skor, nama peserta disembunyikan sampai diundi */
+  st=normalize(Object.assign({},real,{res:{},llPick:{},llDraw:{},live:null}));let html;
+  try{const rs=E.simulate().rounds.filter(r=>!r.skipped);html=boardHTML(rs,true)||bracketHTML(rs,{ri:-1,hi:-1},false,true)}finally{st=real}
+  hideChamp();ov.classList.remove('p2','bd');$('#drT').textContent='Peserta ('+all.length+')';$('#drSkip').textContent='Lewati';
   pool.innerHTML=all.map(id=>'<span class="dp" data-id="'+id+'" style="--d:'+Math.min(id*60,2500)+'ms"><b>'+esc(info[id].n)+'</b><i>'+esc(info[id].s||'\u00a0')+'</i></span>').join('');
-  heats.innerHTML='';ov.hidden=false;requestAnimationFrame(()=>ov.classList.add('show'));
+  br.innerHTML='';br.style.zoom='';ov.hidden=false;requestAnimationFrame(()=>ov.classList.add('show'));
   await sleep(reduce?800:Math.min(8000,3000+all.length*70));if(!alive())return;
-  heats.innerHTML=g.map(gr=>'<section class="dh"><h3>'+esc(gr.label)+'</h3><ol>'+gr.ids.map(()=>'<li class="ds"><span>?</span></li>').join('')+'</ol></section>').join('');
   $('#drT').textContent='Pengundian heat';ov.classList.add('p2');
-  await sleep(reduce?200:900);if(!alive())return;
-  const slots=[...heats.querySelectorAll('.ds')],per=reduce?0:Math.max(110,Math.min(900,45000/all.length));let k=0;
-  for(const gr of g){
-    for(const id of gr.ids){
-      const el=slots[k++];el.scrollIntoView({block:'nearest',behavior:per?'smooth':'auto'});
-      if(per){el.classList.add('spin');const t=setInterval(()=>{el.firstChild.textContent=info[Math.floor(Math.random()*all.length)].n},70);await sleep(per);clearInterval(t)}
-      if(!alive())return;
-      el.classList.remove('spin');el.classList.add('set');el.innerHTML='<b>'+esc(info[id].n)+'</b><i>'+esc(info[id].s||'\u00a0')+'</i>';
-      const pe=pool.querySelector('[data-id="'+id+'"]');if(pe)pe.classList.add('used');
-    }
-    if(per){await sleep(per*.5);if(!alive())return}
+  await sleep(reduce?100:800);if(!alive())return;
+  br.innerHTML=html;fitTo(bd,br);ov.classList.add('bd');
+  await sleep(reduce?100:600);if(!alive())return;
+  const slots=[...br.querySelectorAll('.sl.mask')].sort((a,b)=>a.dataset.ord-b.dataset.ord),per=reduce?0:Math.max(110,Math.min(900,45000/all.length));
+  for(let k=0;k<slots.length;k++){
+    const el=slots[k],id=+el.dataset.did,card=el.closest('.hc'),n=el.querySelector('.sl-n'),s=el.querySelector('.sl-s');
+    card.classList.add('cur');keepVisible(bd,el);
+    if(per){el.classList.add('spin');const t=setInterval(()=>{n.textContent=info[Math.floor(Math.random()*all.length)].n},70);await sleep(per);clearInterval(t)}
+    if(!alive())return;
+    el.classList.remove('mask','spin');el.classList.add('set');n.textContent=info[id].n;s.textContent=info[id].s||'\u00a0';
+    const pe=pool.querySelector('[data-id="'+id+'"]');if(pe)pe.classList.add('used');
+    const nx=slots[k+1];if(!nx||nx.closest('.hc')!==card){card.classList.remove('cur');if(per){await sleep(per*.5);if(!alive())return}}
   }
   $('#drT').textContent='Undian selesai';$('#drSkip').textContent='Tutup';
   await sleep(15000);if(alive())closeDraw();
