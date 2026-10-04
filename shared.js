@@ -7,7 +7,7 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, updated: 0 };
+    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
@@ -23,6 +23,7 @@
     if (!o.llDraw || typeof o.llDraw !== 'object') o.llDraw = {};
     o.mode = o.mode === 'classic' ? 'classic' : 'playin';
     o.target = Math.max(0, Math.round(+o.target) || 0);
+    o.drawShow = o.drawShow && +o.drawShow.id > 0 ? { id: +o.drawShow.id } : null;
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];
     return o;

@@ -261,6 +261,7 @@ a.btn{text-decoration:none;color:inherit}
           <button class="btn primary" id="shuffle" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Acak undian</button>
           <button class="btn" id="seed" type="button">Urut sesuai daftar</button>
+          <button class="btn" id="showDraw" type="button" title="Layar peserta memutar animasi: semua nama tampil, lalu diundi ke tiap heat">▶ Tayangkan undian ke layar peserta</button>
         </div>
       </section>
 
@@ -595,6 +596,7 @@ ta.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];i
 $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importFile(f);e.target.value=''});
 $('#shuffle').addEventListener('click',()=>{const d=drawOrder();st.order=d.order;const had=hasScores();st.res={};st.live=null;save();render();
   toast((had?'Undian baru, skor direset. ':'Undian diacak. ')+(d.clash?d.clash+' heat babak awal masih berisi rekan satu coffeeshop':'Tidak ada rekan satu coffeeshop di heat yang sama'))});
+$('#showDraw').addEventListener('click',()=>{st.drawShow={id:Date.now()};save();toast('Undian ditayangkan di layar peserta (sesuai susunan heat saat ini)')});
 $('#seed').addEventListener('click',()=>{st.order=[...Array(st.count).keys()];st.res={};st.live=null;save();render();toast('Heat disusun sesuai urutan daftar')});
 $('#segMode').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;st.mode=b.dataset.mode;if(st.mode==='classic'&&!st.rows.length)autoPlan();planChanged()});
 $('#tchips').addEventListener('click',e=>{const b=e.target.closest('[data-target]');if(!b)return;st.target=+b.dataset.target;planChanged()});

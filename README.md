@@ -23,6 +23,12 @@ npx vercel --prod
 Tanpa database, halaman tetap jalan dalam **mode lokal**: layar peserta hanya ikut berubah
 di perangkat yang sama dengan admin (misalnya laptop panitia + jendela kedua di proyektor).
 
+## Tayangan undian
+
+Di admin, klik **▶ Tayangkan undian ke layar peserta**. Layar peserta yang sedang terbuka memutar animasi:
+semua nama tampil dulu, lalu diundi satu per satu ke tiap heat (sesuai hasil **Acak undian** saat itu).
+Acak dulu, baru tayangkan. Halaman yang dibuka setelah tombol ditekan tidak memutar ulang.
+
 ## File
 
 - `index.html` : layar peserta

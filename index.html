@@ -251,6 +251,37 @@ html[data-vt="round"]::view-transition-new(root){animation:vt-zin-root .8s var(-
 .conn i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .conn.ok i{background:var(--green)}.conn.local i{background:var(--gold-fill)}.conn.err i{background:var(--live)}
 
+/* tayangan undian */
+.draw-ov{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));background:var(--green);color:#FFFFFF;opacity:0;transition:opacity .5s ease}
+.draw-ov.show{opacity:1}
+.dr-head{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.dr-eb{display:block;font-size:14px;font-weight:900;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-fill)}
+.dr-head h2{margin:0;font-size:clamp(30px,4vw,56px);font-weight:900;line-height:1;text-transform:uppercase}
+#drSkip{flex:none;padding:8px 16px;border-radius:99px;border:2px solid #FFFFFF;background:transparent;color:#FFFFFF;font:inherit;font-weight:800;cursor:pointer}
+.dr-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr);gap:14px}
+.draw-ov:not(.p2) .dr-body{grid-template-rows:minmax(0,1fr)}
+@media (min-width:900px){.draw-ov.p2 .dr-body{grid-template-columns:minmax(260px,30%) 1fr;grid-template-rows:minmax(0,1fr)}}
+.dr-pool{overflow:auto;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;justify-content:center;scrollbar-width:thin}
+.draw-ov.p2 .dr-pool{justify-content:flex-start;max-height:26vh}
+@media (min-width:900px){.draw-ov.p2 .dr-pool{max-height:none}}
+.dp{display:flex;flex-direction:column;line-height:1.15;padding:7px 14px;border-radius:10px;background:#FFFFFF;color:var(--ink);transition:opacity .5s,transform .5s var(--ease);animation:rise .5s var(--ease) both;animation-delay:var(--d,0ms)}
+.dp b{font-size:clamp(16px,1.8vw,26px);font-weight:800}
+.dp i{font-style:normal;font-size:clamp(12px,1.2vw,16px);font-weight:600;color:var(--muted)}
+.draw-ov.p2 .dp b{font-size:15px}.draw-ov.p2 .dp i{font-size:12px}
+.dp.used{opacity:.25;transform:scale(.94)}
+.dr-heats{display:none}
+.draw-ov.p2 .dr-heats{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;align-content:start;overflow:auto;scrollbar-width:thin}
+.dh{background:#FFFFFF;color:var(--ink);border-radius:12px;overflow:hidden;animation:rise .5s var(--ease) both}
+.dh h3{margin:0;padding:6px 12px;background:var(--gold-fill);font-size:14px;font-weight:900;letter-spacing:.08em;text-transform:uppercase}
+.dh ol{list-style:none;margin:0;padding:0}
+.ds{min-height:52px;padding:6px 12px;border-top:2px solid var(--tint);display:flex;flex-direction:column;justify-content:center;line-height:1.15}
+.ds>span{font-size:18px;font-weight:700;color:var(--line2)}
+.ds.spin>span{color:var(--green);font-style:italic}
+.ds b{font-size:19px;font-weight:900}
+.ds i{font-style:normal;font-size:13px;font-weight:600;color:var(--muted)}
+.ds.set{animation:lock .45s var(--ease)}
+@keyframes lock{from{transform:scale(1.06);background:var(--gold-fill)}}
+
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -268,6 +299,10 @@ html[data-vt="round"]::view-transition-new(root){animation:vt-zin-root .8s var(-
   <div class="scroller" id="scroller"><div class="bracket" id="bracket"></div></div>
 </div>
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Stoa Fun Brewing Competition"></div>
+<div class="draw-ov" id="draw" hidden role="dialog" aria-label="Undian heat">
+  <div class="dr-head"><div><span class="dr-eb">Stoa Fun Brewing Competition</span><h2 id="drT">Peserta</h2></div><button id="drSkip" type="button">Lewati</button></div>
+  <div class="dr-body"><div class="dr-pool" id="drPool"></div><div class="dr-heats" id="drHeats"></div></div>
+</div>
 <canvas id="confetti" hidden></canvas>
 <div class="announce" id="announce" role="status" aria-live="polite"><b id="annK"></b><span id="annT"></span></div>
 <div class="conn" id="conn"><i></i><span>Menghubungkan…</span></div>
@@ -284,7 +319,9 @@ let fitT,st=null,lastUpd=-1,rendered=false,prevSig=new Map(),lastLive='',lastRou
 const E=engine(()=>st);
 
 /* ---------- data masuk ---------- */
-function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);update()}
+function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);update();
+  /* tayangan undian hanya diputar bila admin memicunya saat halaman ini terbuka */
+  const sid=st.drawShow?st.drawShow.id:0;if(lastShow===null)lastShow=sid;else if(sid&&sid!==lastShow){lastShow=sid;playDraw()}}
 /* jenis perubahan menentukan animasi: 'round' = zoom seluruh layar, 'heat' = zoom kartu sorotan */
 function liveKeys(){const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim),fin=rs[rs.length-1],finished=roundDone(fin);
   return{key:finished?'end':lv.ri+'-'+lv.hi,round:finished?'end':rs[lv.ri].sp.short}}
@@ -445,6 +482,43 @@ function confetti(){
   (function f(t){const el=t-t0;x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,W,H);
     P.forEach(p=>{p.vy+=.32;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.globalAlpha=Math.max(0,1-el/6500);x.fillStyle=p.c;x.fillRect(-p.w/2,-p.h/2,p.w,p.h);x.restore()});
     if(el<6500)requestAnimationFrame(f);else{x.clearRect(0,0,W,H);c.hidden=true}})(t0);
+}
+
+
+/* ---------- tayangan undian: semua nama tampil, lalu diundi ke tiap heat ---------- */
+let lastShow=null,drawTok=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function drawGroups(){
+  const rd=E.simulate().rounds.find(r=>!r.skipped),g=[];if(!rd)return g;
+  if(rd.auto&&rd.auto.length)g.push({label:'Auto lolos · '+rd.sp.P+' Besar',ids:rd.auto.slice()});
+  rd.heats.forEach((h,hi)=>g.push({label:rd.sp.kind==='final'?'Final':(rd.sp.kind==='qual'?'Kualifikasi':rd.sp.label)+' · Heat '+(hi+1),ids:h.map(m=>m.id).filter(x=>x!=null)}));
+  return g;
+}
+function closeDraw(){drawTok++;const ov=$('#draw');ov.classList.remove('show');setTimeout(()=>{if(!ov.classList.contains('show'))ov.hidden=true},500)}
+$('#drSkip').addEventListener('click',closeDraw);
+async function playDraw(){
+  const tok=++drawTok,alive=()=>tok===drawTok,ov=$('#draw'),g=drawGroups(),all=[...Array(st.count).keys()];
+  const info=all.map(id=>({n:E.nameOf(id),s:E.shopOf(id)})),pool=$('#drPool'),heats=$('#drHeats');
+  hideChamp();ov.classList.remove('p2');$('#drT').textContent='Peserta ('+all.length+')';$('#drSkip').textContent='Lewati';
+  pool.innerHTML=all.map(id=>'<span class="dp" data-id="'+id+'" style="--d:'+Math.min(id*60,2500)+'ms"><b>'+esc(info[id].n)+'</b><i>'+esc(info[id].s||'\u00a0')+'</i></span>').join('');
+  heats.innerHTML='';ov.hidden=false;requestAnimationFrame(()=>ov.classList.add('show'));
+  await sleep(reduce?800:Math.min(8000,3000+all.length*70));if(!alive())return;
+  heats.innerHTML=g.map(gr=>'<section class="dh"><h3>'+esc(gr.label)+'</h3><ol>'+gr.ids.map(()=>'<li class="ds"><span>?</span></li>').join('')+'</ol></section>').join('');
+  $('#drT').textContent='Pengundian heat';ov.classList.add('p2');
+  await sleep(reduce?200:900);if(!alive())return;
+  const slots=[...heats.querySelectorAll('.ds')],per=reduce?0:Math.max(110,Math.min(900,45000/all.length));let k=0;
+  for(const gr of g){
+    for(const id of gr.ids){
+      const el=slots[k++];el.scrollIntoView({block:'nearest',behavior:per?'smooth':'auto'});
+      if(per){el.classList.add('spin');const t=setInterval(()=>{el.firstChild.textContent=info[Math.floor(Math.random()*all.length)].n},70);await sleep(per);clearInterval(t)}
+      if(!alive())return;
+      el.classList.remove('spin');el.classList.add('set');el.innerHTML='<b>'+esc(info[id].n)+'</b><i>'+esc(info[id].s||'\u00a0')+'</i>';
+      const pe=pool.querySelector('[data-id="'+id+'"]');if(pe)pe.classList.add('used');
+    }
+    if(per){await sleep(per*.5);if(!alive())return}
+  }
+  $('#drT').textContent='Undian selesai';$('#drSkip').textContent='Tutup';
+  await sleep(15000);if(alive())closeDraw();
 }
 
 /* ---------- koneksi ---------- */
