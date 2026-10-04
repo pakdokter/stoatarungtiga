@@ -23,6 +23,12 @@ npx vercel --prod
 Tanpa database, halaman tetap jalan dalam **mode lokal**: layar peserta hanya ikut berubah
 di perangkat yang sama dengan admin (misalnya laptop panitia + jendela kedua di proyektor).
 
+## Mode layar peserta
+
+Di admin (bar atas bagan) pilih **Layar peserta**:
+- **Bagan lengkap (hari undian)**: seluruh bagan knockout tampil, tiga heat semifinal (kiri, kanan, bawah) menuju Final di tengah, kualifikasi di atas. Ini default.
+- **Pertandingan live**: sorotan heat yang sedang bertanding. Otomatis aktif saat admin memilih heat LIVE.
+
 ## Tayangan undian
 
 Di admin, klik **▶ Tayangkan undian ke layar peserta**. Layar peserta yang sedang terbuka memutar animasi:

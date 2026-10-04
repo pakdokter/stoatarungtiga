@@ -251,6 +251,27 @@ html[data-vt="round"]::view-transition-new(root){animation:vt-zin-root .8s var(-
 .conn i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
 .conn.ok i{background:var(--green)}.conn.local i{background:var(--gold-fill)}.conn.err i{background:var(--live)}
 
+/* hari undian: bagan lengkap, tiga arah menuju Final di tengah */
+body.m-board #steps,body.m-board #spot{display:none}
+@media (min-width:900px) and (min-height:600px){body.m-board .screen{grid-template-rows:auto minmax(0,1fr)}}
+body.m-board .col{opacity:1!important;filter:none!important}
+body.m-board .sl-n,body.m-board .sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+.tri{display:grid;grid-template-columns:auto auto auto;grid-template-areas:"top top top" "left center right" "bottom bottom bottom";gap:18px 10px;align-items:center;justify-items:center;margin:0 auto;padding-top:14px}
+.tri-top{grid-area:top;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tri-center{grid-area:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tri-center .hc{border-width:3px;border-color:var(--gold);width:260px}
+.tri-center .tri-lab{color:var(--gold);font-size:22px}
+.tri-arm{display:flex;align-items:center;gap:10px}
+.a-left{grid-area:left;flex-direction:row}.a-right{grid-area:right;flex-direction:row-reverse}.a-bottom{grid-area:bottom;flex-direction:column-reverse}
+.tri-blk{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tri-heats{display:flex;flex-direction:column;gap:10px}
+.a-bottom .tri-heats,.tri-heats.row{flex-direction:row}
+.tri .hc{width:232px;flex:none}
+.tri-lab{font-size:15px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--green)}
+.tri-ar{font-size:30px;font-weight:900;line-height:1;color:var(--green)}
+.tri-note{max-width:min(90vw,700px);text-align:center;font-size:13.5px;font-weight:600;color:var(--muted)}
+@media (max-width:899px){.sl-n,.sl-s{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}.dp,.ds{overflow-wrap:anywhere}}
+
 /* tayangan undian */
 .draw-ov{position:fixed;inset:0;z-index:25;display:flex;flex-direction:column;gap:14px;padding:calc(16px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px));background:var(--green);color:#FFFFFF;opacity:0;transition:opacity .5s ease}
 .draw-ov.show{opacity:1}
@@ -345,20 +366,25 @@ function render(){
   const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim);
   const fin=rs[rs.length-1],finished=roundDone(fin),lr=rs[lv.ri];
   /* mode tampilan: final dominan, fokus saat 9 besar ke bawah */
-  const mode=finished||lr.sp.kind==='final'?'m-final':lr.n<=9?'m-focus':'';
+  const board=st.view!=='live';
+  const mode=board?'':finished||lr.sp.kind==='final'?'m-final':lr.n<=9?'m-focus':'';
+  document.body.classList.toggle('m-board',board);
   document.body.classList.toggle('m-final',mode==='m-final');document.body.classList.toggle('m-focus',mode==='m-focus');document.body.classList.toggle('finished',finished);
   lastRound=finished?'end':lr.sp.short;
-  renderNow(rs,lv,finished);renderSteps(rs,lv,finished);renderSpot(rs,lv,finished);renderBracket(rs,lv,finished);
+  if(board){renderNow(rs,lv,true);$('#steps').innerHTML='';$('#spot').innerHTML='';renderBoard(rs)}
+  else{renderNow(rs,lv,finished);renderSteps(rs,lv,finished);renderSpot(rs,lv,finished);renderBracket(rs,lv,finished)}
   fit();clearTimeout(fitT);fitT=setTimeout(()=>{fit();scrollToLive(true)},780);if(rendered)runFx();else snapshotSig();
   const key=finished?'end':lv.ri+'-'+lv.hi;
   if(key!==lastLive){const first=!lastLive;lastLive=key;requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToLive(first)))}
-  champion(fin,finished);
+  champion(fin,finished&&!board);
   rendered=true;
 }
 function renderNow(rs,lv,finished){
   const n=$('#now');n.hidden=false;n.classList.toggle('done',finished);
-  n.querySelector('b').textContent=finished?'SELESAI':'LIVE';
+  const board=st.view!=='live';
+  n.querySelector('b').textContent=board?'UNDIAN':finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
+  if(board){$('#nowTxt').textContent='Bagan pertandingan';return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){
@@ -421,6 +447,18 @@ function renderBracket(rs,lv,finished){
   }).join('');
 }
 
+/* bagan tiga arah: tiga heat semifinal (kiri, kanan, bawah) bertemu di Final tengah; kualifikasi di atas */
+function renderBoard(rs){
+  const core=rs.filter(r=>r.sp.kind==='pre'||r.sp.kind==='semi'),qual=rs.find(r=>r.sp.kind==='qual'),fin=rs[rs.length-1],last=core[core.length-1];
+  if(!last||last.H!==3||fin.sp.kind!=='final'){renderBracket(rs,{ri:-1,hi:-1},false);return}
+  const arm=(i,cls,ar)=>'<div class="tri-arm '+cls+'">'+core.map(rd=>{
+    const a=Math.floor(i*rd.H/3),b=Math.floor((i+1)*rd.H/3);if(a>=b)return '';
+    let h='';for(let hi=a;hi<b;hi++)h+=hcard(rd,hi,false);
+    return '<div class="tri-blk"><span class="tri-lab">'+esc(rd.sp.label)+'</span><div class="tri-heats">'+h+'</div></div><span class="tri-ar" aria-hidden="true">'+ar+'</span>'}).join('')+'</div>';
+  const top=qual?'<div class="tri-top"><span class="tri-lab">Kualifikasi · '+qual.H+' heat</span><div class="tri-heats row">'+qual.heats.map((h,hi)=>hcard(qual,hi,false)).join('')+'</div><span class="tri-note">'+esc(qual.notes.join(' · '))+'</span><span class="tri-ar" aria-hidden="true">↓</span></div>':'';
+  $('#bracket').innerHTML='<div class="tri">'+top+arm(0,'a-left','→')+'<div class="tri-center"><span class="tri-lab">Final</span>'+hcard(fin,0,false)+'</div>'+arm(1,'a-right','←')+arm(2,'a-bottom','↑')+'</div>';
+}
+
 /* ---------- efek perubahan ---------- */
 function snapshotSig(){prevSig=new Map();document.querySelectorAll('[data-pos]').forEach(el=>prevSig.set(el.dataset.pos,el.dataset.sig))}
 function runFx(){
@@ -450,13 +488,13 @@ function fit(){
   const W=br.scrollWidth,H=br.scrollHeight,aw=sc.clientWidth,ah=sc.clientHeight;if(!W||!H)return;
   const big=document.body.classList.contains('m-focus')||document.body.classList.contains('m-final');
   /* mode fokus/final: jangan perkecil demi tinggi, cukup gulir ke heat yang sedang bertanding */
-  let z=big?Math.min(1,aw/W):Math.min(1,aw/W,ah/H);if(z<0.62)z=Math.max(0.62,Math.min(1,aw/W));
+  let z=big?Math.min(1,aw/W):Math.min(1,aw/W,ah/H);if(document.body.classList.contains('m-board'))z=Math.min(1,aw/W,ah/H);else if(z<0.62)z=Math.max(0.62,Math.min(1,aw/W));
   br.style.zoom=z.toFixed(3);
 }
 function scrollToLive(instant){
-  const el=document.querySelector('.hc.live')||document.querySelector('.col.final .hc');if(!el)return;
+  const el=document.querySelector('.hc.live')||document.querySelector('.tri-center .hc')||document.querySelector('.col.final .hc');if(!el)return;
   const sc=$('#scroller'),r=el.getBoundingClientRect(),s=sc.getBoundingClientRect();
-  sc.scrollTo({left:sc.scrollLeft+r.left-s.left-(s.width-r.width)/2,top:desk()?sc.scrollTop+r.top-s.top-(s.height-r.height)/2:0,behavior:instant||reduce?'auto':'smooth'});
+  sc.scrollTo({left:sc.scrollLeft+r.left-s.left-(s.width-r.width)/2,top:(desk()||document.body.classList.contains('m-board'))?sc.scrollTop+r.top-s.top-(s.height-r.height)/2:0,behavior:instant||reduce?'auto':'smooth'});
 }
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{fit();scrollToLive(true)},150)});
 
