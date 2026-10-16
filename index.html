@@ -355,6 +355,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
     </div>
     <div class="bar-r">
       <a class="rules" id="rules" href="/aturan">Aturan &amp; regulasi lomba</a>
+      <a class="rules" id="faq" href="/faq">FAQ peserta</a>
       <div class="tabs" id="tabs" role="tablist" aria-label="Tampilan" hidden>
         <button type="button" role="tab" data-v="live">Heat saat ini</button>
         <button type="button" role="tab" data-v="bracket">Bagan lengkap</button>
@@ -415,7 +416,7 @@ let viewTab=null,baseKey='';
 function boardMode(){if(!st||st.stage<2||!st.dday)return true;return(viewTab||st.view)!=='live'}
 function chrome(){
   const se=$('#sess');se.hidden=!st.code;se.textContent='Sesi '+st.code;
-  $('#rules').hidden=st.stage>=2;
+  $('#rules').hidden=$('#faq').hidden=st.stage>=2;
   const tabs=$('#tabs'),on=st.stage>=2&&st.dday;tabs.hidden=!on;
   if(on){const cur=viewTab||st.view;tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===cur)))}
 }

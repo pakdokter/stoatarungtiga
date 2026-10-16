@@ -5,6 +5,7 @@ Bracket live untuk Stoa Fun Brewing Competition, Stoa Space Selong.
 - `/` : layar peserta (proyektor / HP peserta). Hanya bracket, heat LIVE disorot otomatis.
 - `/admin` : panel admin (input peserta, skor, pilih heat LIVE). Dikunci PIN.
 - `/aturan` : aturan & regulasi lomba (statis, terbuka untuk semua).
+- `/faq` : FAQ peserta (statis, publik). Tautan di halaman utama hilang setelah undian dikunci final.
 
 ## Deploy ke Vercel
 
