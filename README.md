@@ -4,6 +4,7 @@ Bracket live untuk Stoa Fun Brewing Competition, Stoa Space Selong.
 
 - `/` : layar peserta (proyektor / HP peserta). Hanya bracket, heat LIVE disorot otomatis.
 - `/admin` : panel admin (input peserta, skor, pilih heat LIVE). Dikunci PIN.
+- `/aturan` : aturan & regulasi lomba (statis, terbuka untuk semua).
 
 ## Deploy ke Vercel
 
@@ -39,5 +40,6 @@ Acak dulu, baru tayangkan. Halaman yang dibuka setelah tombol ditekan tidak memu
 
 - `index.html` : layar peserta
 - `admin.html` : panel admin
+- `aturan.html` : halaman aturan & regulasi lomba (statis, publik, di `/aturan`)
 - `shared.js` : mesin bracket & sinkronisasi (dipakai dua halaman)
 - `api/state.js` : Vercel Function, simpan/ambil state dari Upstash Redis

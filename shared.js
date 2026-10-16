@@ -1,13 +1,15 @@
 /* Stoa Fun Brewing Competition: engine bersama untuk layar peserta dan admin */
 (function (g) {
   'use strict';
-  const SAMPLE = ["Ari Wiranata - Kopi Tiga Gili", "Baiq Nurul - Senja Brew Bar", "Candra Putra - Ladang Roastery", "Dewi Lestari - Kopi Tiga Gili", "Eka Saputra - Rumah Seduh Masbagik", "Fajar Hidayat - Stoa Space", "Gita Maharani - Pojok Filter", "Hendra Kurnia - Ladang Roastery", "Intan Permata - Senja Brew Bar", "Joko Susilo - Kedai Sembalun", "Kiki Amelia - Stoa Space", "Lalu Rizky - Rumah Seduh Masbagik", "Maya Sari - Pojok Filter", "Nanda Pratama - Kedai Sembalun", "Oki Setiawan - Kopi Tiga Gili", "Putri Ayu - Ladang Roastery", "Rahmat Hadi - Senja Brew Bar", "Sinta Dewi - Pojok Filter", "Taufik Akbar - Stoa Space", "Wulan Anggraini - Kedai Sembalun"];
+  const SAMPLE = ["Razak Husein - Doto Coffee", "Yazirwannn - Doto Coffee", "Ella Abrori - Doto Coffee", "M Mufti Hafiz - Kopi Hew", "Ridho - Lombok Roasters", "Wisnu - Floorenz Tinn", "Irpan Sanusi - Mahakala Rinjani", "Alpha Syafran - On Coffee Space", "Adit - Djejak Kios Kopi", "Irfani - Nekorio", "Alang Purname - Esda Kopi", "Tajli Ahmad Mardiansyah - Independent", "Lalu Oktan - Toko Kopi Manis", "Fahril Zini - Tebar Coffee", "Ismi Khairunnisa - Liminal Lombok", "Rato Bisma - Warung Madjoe", "Kadek Osi - Bifrost.Run", "Adit - Bifrost.Run", "Lalu Dane - Bifrost.Run", "Habibi Al-Habsyi - Madjoe Coffee Mataram", "Bagus - Nekorio", "Ardy - Selalu Bagus", "Koko Alie - Taked Kopi", "Gunawan - Sore Cafe", "Muhamad Keanu Sudaishi Fahni - Kotatua Kopi (Kotukop)", "Dimas Rahmat Dani - Kotatua Kopi (Kotukop)"];
+  /* urutan undian awal: tidak ada rekan satu coffeeshop di heat babak pertama yang sama */
+  const DEF_ORDER = [13, 23, 25, 14, 8, 5, 7, 2, 17, 22, 15, 9, 20, 24, 6, 12, 4, 19, 3, 16, 10, 21, 0, 11, 1, 18];
   const CROWN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-1.6-10-4.6 4.2L12 5.5 9.2 12.2 4.6 8z" fill="currentColor"/><rect x="3" y="19.5" width="18" height="2" rx="1" fill="currentColor"/></svg>';
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: 20, names: SAMPLE.slice(), sample: true, final: 3, semi: 3, rem: 'bye', rows: [], order: shuffleArr([...Array(20).keys()]), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', updated: 0 };
+    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
