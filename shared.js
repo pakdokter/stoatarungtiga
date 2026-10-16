@@ -13,6 +13,8 @@
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
+    /* data contoh lama (belum pernah diedit) diganti daftar peserta yang sekarang */
+    if (src && typeof src === 'object' && src.sample === true) { const d = defState(); o.names = d.names; o.count = d.count; o.order = d.order; o.res = {}; o.live = null; o.llPick = {}; o.llDraw = {}; o.sample = false; }
     o.final = 3; o.semi = o.semi ? 3 : 0; o.rem = o.rem === 'two' ? 'two' : 'bye';
     o.count = Math.max(3, Math.min(256, Math.round(+o.count) || 3));
     o.names = Array.isArray(o.names) ? o.names.map(x => String(x == null ? '' : x)) : [];
