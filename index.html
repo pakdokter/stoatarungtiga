@@ -309,6 +309,17 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 @keyframes lock{from{background:var(--gold-fill)}}
 .hc.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.8),var(--shadow)}
 
+/* layar penuh pemenang heat */
+.win-ov{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,22px);padding:24px;text-align:center;background:var(--green);color:#fff;animation:winin .45s var(--ease) both}
+.win-k{font-size:clamp(16px,2.4vw,34px);font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#D6EBD7}
+.win-crown svg{width:clamp(56px,10vw,150px);height:auto;color:var(--gold-fill)}
+.win-list{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(16px,4vw,60px);width:100%}
+.win-one{display:flex;flex-direction:column;align-items:center;gap:6px;max-width:100%}
+.win-n{font-weight:900;font-size:clamp(38px,9vw,140px);line-height:.98;text-transform:uppercase;overflow-wrap:anywhere}
+.win-s{font-weight:700;font-size:clamp(20px,3.6vw,52px);color:var(--gold-fill)}
+.win-sc{font-weight:800;font-size:clamp(18px,2.6vw,38px);padding:6px 20px;border-radius:99px;background:#fff;color:var(--green)}
+.win-f{margin-top:clamp(6px,2vh,24px);font-size:clamp(15px,1.8vw,26px);font-weight:700;color:#D6EBD7}
+@keyframes winin{from{opacity:0;transform:scale(1.04)}}
 /* kontrol header, tab, sesi */
 .bar-r{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .sess{margin-left:6px;padding:2px 10px;border-radius:99px;border:1.5px solid #D6EBD7;font-size:12px;letter-spacing:.14em;color:#fff}
@@ -369,6 +380,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
   <section class="next" id="next" hidden aria-label="Heat berikutnya"></section>
   <div class="scroller" id="scroller"><div class="bracket" id="bracket"></div></div>
 </div>
+<div class="win-ov" id="winov" hidden role="dialog" aria-label="Pemenang heat" aria-live="polite"></div>
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Stoa Fun Brewing Competition"></div>
 <div class="draw-ov" id="draw" hidden role="dialog" aria-label="Undian heat">
   <div class="dr-head"><div><span class="dr-eb">Stoa Fun Brewing Competition</span><h2 id="drT">Peserta</h2></div><button id="drSkip" type="button">Lewati</button></div>
@@ -391,8 +403,8 @@ const E=engine(()=>st);
 /* hasil heat selesai ditahan 10 detik, atau sampai admin menekan Lanjut */
 let hold=null,holdT=null,holdI=null,lastFin=null;
 function curLive(sim){return hold?E.liveOf(sim,{k:hold.k,h:hold.h}):E.liveOf(sim)}
-function endHold(){if(!hold)return;hold=null;clearTimeout(holdT);clearInterval(holdI);lastRound='';update()}
-function startHold(f){hold={k:f.k,h:f.h,id:f.id,until:Date.now()+10000};clearTimeout(holdT);clearInterval(holdI);holdT=setTimeout(endHold,10000);holdI=setInterval(()=>{const el=document.getElementById('hold');if(el)el.textContent=Math.max(0,Math.ceil((hold.until-Date.now())/1000))},500)}
+function endHold(){if(!hold)return;hold=null;$('#winov').hidden=true;clearTimeout(holdT);clearInterval(holdI);lastRound='';update()}
+function startHold(f){hold={k:f.k,h:f.h,id:f.id,until:Date.now()+10000};clearTimeout(holdT);clearInterval(holdI);holdT=setTimeout(endHold,10000);holdI=setInterval(()=>{const n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));document.querySelectorAll('.hold-n').forEach(el=>el.textContent=n)},500)}
 
 /* ---------- data masuk ---------- */
 function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);const bk=st.code+'|'+st.dday+'|'+st.view;if(bk!==baseKey){baseKey=bk;viewTab=null}
@@ -430,6 +442,18 @@ function chrome(){
   if(on){const cur=viewTab||st.view;tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===cur)))}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('#tabs button');if(!b||!st)return;viewTab=b.dataset.v;lastRound='';render()});
+function renderWinner(rs,lv){
+  const ov=$('#winov');
+  const rd=hold&&!boardMode()?rs.find(r=>r.sp.short===hold.k):null;
+  if(!rd||rd.sp.kind==='final'||!rd.heats[hold.h]){ov.hidden=true;return}
+  const ids=rd.heats[hold.h].map(m=>m.id).filter(id=>id!=null&&rd.status.get(id)==='win');
+  if(!ids.length){ov.hidden=true;return}
+  const show=showScore(rd,hold.h),n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));
+  ov.innerHTML='<div class="win-k">'+(ids.length>1?'Pemenang':'Pemenang')+' · '+esc(rd.sp.label)+' · Heat '+(hold.h+1)+'</div><div class="win-crown">'+CROWN+'</div>'
+   +'<div class="win-list">'+ids.map(id=>{const sc=show?scoreOf(rd.sp.short,id):'';return '<div class="win-one"><div class="win-n">'+esc(E.nameOf(id))+'</div><div class="win-s">'+esc(E.shopOf(id)||'')+'</div>'+(sc?'<div class="win-sc">'+esc(sc)+(st.judges?' suara':'')+'</div>':'')+'</div>'}).join('')+'</div>'
+   +'<div class="win-f">Lanjut ke heat berikutnya dalam <span class="hold-n">'+n+'</span> dtk</div>';
+  ov.hidden=false;
+}
 function renderNext(rs,lv,finished){
   const el=$('#next');
   if(finished){el.innerHTML='';return}
@@ -474,6 +498,7 @@ function render(){
   const key=finished?'end':lv.ri+'-'+lv.hi;
   if(key!==lastLive){const first=!lastLive;lastLive=key;requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToLive(first)))}
   champion(fin,finished&&!board);
+  renderWinner(rs,lv);
   rendered=true;
 }
 function renderNow(rs,lv,finished){
@@ -482,7 +507,7 @@ function renderNow(rs,lv,finished){
   n.querySelector('b').textContent=board?(prov?'SEMENTARA':st.dday?'HARI H':'UNDIAN'):finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
   if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.dday?'Bagan lengkap':'Undian final · pengacakan ke-'+st.draws;return}
-  if(hold&&!finished){$('#nowTxt').innerHTML=esc(rd.sp.label)+' · Hasil heat · lanjut dalam <span id="hold">'+Math.max(0,Math.ceil((hold.until-Date.now())/1000))+'</span> dtk';return}
+  if(hold&&!finished){$('#nowTxt').textContent=rd.sp.label+' · Hasil heat';return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){
