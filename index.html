@@ -310,7 +310,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .hc.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.8),var(--shadow)}
 
 /* layar penuh pemenang heat */
-.win-ov{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,22px);padding:24px;text-align:center;background:var(--green);color:#fff;animation:winin .45s var(--ease) both}
+.win-ov{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:clamp(6px,1.6vh,22px);padding:20px 24px;overflow:auto;text-align:center;background:var(--green);color:#fff;animation:winin .5s var(--ease) both}
 .win-k{font-size:clamp(16px,2.4vw,34px);font-weight:900;letter-spacing:.18em;text-transform:uppercase;color:#D6EBD7}
 .win-crown svg{width:clamp(56px,10vw,150px);height:auto;color:var(--gold-fill)}
 .win-list{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(16px,4vw,60px);width:100%}
@@ -318,6 +318,21 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .win-n{font-weight:900;font-size:clamp(38px,9vw,140px);line-height:.98;text-transform:uppercase;overflow-wrap:anywhere}
 .win-s{font-weight:700;font-size:clamp(20px,3.6vw,52px);color:var(--gold-fill)}
 .win-sc{font-weight:800;font-size:clamp(18px,2.6vw,38px);padding:6px 20px;border-radius:99px;background:#fff;color:var(--green)}
+.win-list.multi{gap:clamp(8px,1.6vh,18px) clamp(16px,3vw,48px)}
+.win-list.multi .win-n{font-size:clamp(22px,4.4vw,64px)}
+.win-list.multi .win-s{font-size:clamp(14px,2vw,28px)}
+.win-list.multi .win-sc{font-size:clamp(14px,1.8vw,24px);padding:3px 14px}
+.win-big{font-weight:900;font-size:clamp(26px,5.2vw,78px);line-height:1;text-transform:uppercase;letter-spacing:.02em;color:var(--gold-fill)}
+.win-msg{font-size:clamp(16px,2vw,30px);font-weight:700;color:#FFF3D6;max-width:34ch}
+.win-ov.tie{background:#6B4300}
+.win-ov.tie .win-s{color:#FFE29A}.win-ov.tie .win-k,.win-ov.tie .win-f{color:#FFE9B8}.win-ov.tie .win-sc{color:#6B4300}
+.win-ov>*{animation:winup .65s var(--ease) both}
+.win-ov>:nth-child(2){animation-delay:.06s}.win-ov>:nth-child(3){animation-delay:.14s}.win-ov>:nth-child(4){animation-delay:.24s}.win-ov>:nth-child(5){animation-delay:.34s}
+.win-ov .win-crown{animation:crown .9s cubic-bezier(.34,1.56,.64,1) .08s both}
+.win-ov.out{animation:winout .3s ease-in forwards}.win-ov.out>*{animation:none}
+@keyframes winup{from{opacity:0;transform:translateY(22px) scale(.97)}}
+@keyframes crown{0%{opacity:0;transform:translateY(-60px) scale(.5) rotate(-12deg)}100%{opacity:1;transform:none}}
+@keyframes winout{to{opacity:0;transform:scale(1.03)}}
 .win-f{margin-top:clamp(6px,2vh,24px);font-size:clamp(15px,1.8vw,26px);font-weight:700;color:#D6EBD7}
 @keyframes winin{from{opacity:0;transform:scale(1.04)}}
 /* kontrol header, tab, sesi */
@@ -329,7 +344,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .tabs button:focus-visible{outline:3px solid var(--gold-fill);outline-offset:1px}
 /* preview heat berikutnya */
 .next{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
-.nx-h{font-weight:900;font-size:clamp(16px,1.6vw,22px);letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.nx-h{position:sticky;top:0;z-index:2;background:var(--bg);padding:4px 0 6px;font-weight:900;font-size:clamp(16px,1.6vw,22px);letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
 .nx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px;align-content:start}
 .nx{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
 .nx-k{font-weight:900;font-size:clamp(15px,1.4vw,19px);text-transform:uppercase;letter-spacing:.05em}
@@ -344,9 +359,20 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .nx-t.live{background:var(--live);color:#fff}.nx-t.nxt{background:var(--green);color:#fff}
 .nx.live{border-color:var(--live);box-shadow:0 0 0 3px rgba(209,42,30,.18)}
 .nx.next{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,92,34,.16)}
-/* heat selesai: warna abu-krem dan pudar */
-.nx.done{background:#EFEDE4;border-color:#D3CFBF;opacity:.58;filter:saturate(.35)}
-.nx.done li.w b::before{content:"\2713  ";color:var(--green)}
+/* heat selesai: kartu pudar, tapi pemenang tetap kontras tinggi */
+.nx{transition:background-color .5s var(--ease),border-color .5s var(--ease),box-shadow .5s var(--ease),filter .5s var(--ease),opacity .5s var(--ease)}
+.nx.fresh{animation:nxin .5s var(--ease) both}
+@keyframes nxin{from{opacity:0;transform:translateY(10px)}}
+.nx.done{background:#F1EFE6;border-color:#CFCBB9}
+.nx.done .nx-k{opacity:.6}
+.nx li{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:9px;transition:background-color .5s var(--ease),opacity .5s var(--ease)}
+.nx li>span{min-width:0}
+.nx.done li.l{opacity:.45}
+.nx.done li.w{background:#1F5C22;color:#fff;padding:6px 10px;margin:0 -4px}
+.nx.done li.w i{color:#D6EBD7}
+.nx-w{flex:none;font-style:normal;font-weight:900;font-size:12px;letter-spacing:.12em;padding:3px 9px;border-radius:99px;background:var(--gold-fill);color:var(--ink)}
+.nx-sc{flex:none;font-style:normal;font-weight:800;font-size:14px;color:var(--muted)}
+.nx.done li.w .nx-sc{color:#fff}
 /* heat belum aktif: buram sampai digulir ke area atas */
 .nx.later{filter:blur(6px);opacity:.75;transition:filter .45s var(--ease),opacity .45s var(--ease)}
 .nx.later.vis{filter:none;opacity:1}
@@ -414,14 +440,14 @@ const E=engine(()=>st);
 /* hasil heat selesai ditahan 10 detik, atau sampai admin menekan Lanjut */
 let hold=null,holdT=null,holdI=null,lastFin=null;
 function curLive(sim){return hold?E.liveOf(sim,{k:hold.k,h:hold.h}):E.liveOf(sim)}
-function endHold(){if(!hold)return;hold=null;$('#winov').hidden=true;clearTimeout(holdT);clearInterval(holdI);lastRound='';update()}
-function startHold(f){hold={k:f.k,h:f.h,id:f.id,until:Date.now()+10000};clearTimeout(holdT);clearInterval(holdI);holdT=setTimeout(endHold,10000);holdI=setInterval(()=>{const n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));document.querySelectorAll('.hold-n').forEach(el=>el.textContent=n)},500)}
+function endHold(){if(!hold)return;hold=null;hideWinner();clearTimeout(holdT);clearInterval(holdI);lastRound='';update()}
+function startHold(f){hold={k:f.k,h:f.h,id:f.id,kind:f.kind||'win',until:Date.now()+10000};clearTimeout(holdT);clearInterval(holdI);holdT=setTimeout(endHold,10000);holdI=setInterval(()=>{const n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));document.querySelectorAll('.hold-n').forEach(el=>el.textContent=n)},500)}
 
 /* ---------- data masuk ---------- */
 function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);const bk=st.code+'|'+st.dday+'|'+st.view;if(bk!==baseKey){baseKey=bk;viewTab=null}
   /* hasil heat baru: tahan 10 detik (atau sampai admin menekan Lanjut) sebelum pindah ke heat berikutnya */
-  const fid=st.fin?st.fin.id:0;if(lastFin===null)lastFin=fid;else if(fid&&fid!==lastFin){lastFin=fid;if(st.stage>=2&&st.dday&&st.finAck!==fid)startHold(st.fin)}
-  if(hold&&(st.finAck===hold.id||!st.dday)){hold=null;clearTimeout(holdT);clearInterval(holdI)}
+  const fid=st.fin?st.fin.id:0;if(lastFin===null)lastFin=fid;else if(fid&&fid!==lastFin){lastFin=fid;if(st.finAck!==fid)startHold(st.fin)}
+  if(hold&&st.finAck===hold.id){hold=null;clearTimeout(holdT);clearInterval(holdI);hideWinner()}
   update();
   /* tayangan undian hanya diputar bila admin memicunya saat halaman ini terbuka */
   const sid=st.drawShow?st.drawShow.id:0;if(lastShow===null)lastShow=sid;else if(sid&&sid!==lastShow){lastShow=sid;playDraw()}}
@@ -453,39 +479,76 @@ function chrome(){
   if(on){const cur=viewTab||st.view;tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===cur)))}
 }
 document.addEventListener('click',e=>{const b=e.target.closest('#tabs button');if(!b||!st)return;viewTab=b.dataset.v;lastRound='';render()});
-function renderWinner(rs,lv){
+let hideT=null;
+function hideWinner(){const ov=$('#winov');if(ov.hidden)return;ov.classList.add('out');clearTimeout(hideT);hideT=setTimeout(()=>{ov.hidden=true;ov.classList.remove('out');ov.dataset.sig=''},320)}
+/* pop-up layar penuh: pemenang heat (lolos ke babak berikutnya) atau seri */
+function renderWinner(rs){
   const ov=$('#winov');
-  const rd=hold&&!boardMode()?rs.find(r=>r.sp.short===hold.k):null;
-  if(!rd||rd.sp.kind==='final'||!rd.heats[hold.h]){ov.hidden=true;return}
-  const ids=rd.heats[hold.h].map(m=>m.id).filter(id=>id!=null&&rd.status.get(id)==='win');
-  if(!ids.length){ov.hidden=true;return}
-  const show=showScore(rd,hold.h),n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));
-  ov.innerHTML='<div class="win-k">'+(ids.length>1?'Pemenang':'Pemenang')+' · '+esc(rd.sp.label)+' · Heat '+(hold.h+1)+'</div><div class="win-crown">'+CROWN+'</div>'
-   +'<div class="win-list">'+ids.map(id=>{const sc=show?scoreOf(rd.sp.short,id):'';return '<div class="win-one"><div class="win-n">'+esc(E.nameOf(id))+'</div><div class="win-s">'+esc(E.shopOf(id)||'')+'</div>'+(sc?'<div class="win-sc">'+esc(sc)+(st.judges?' suara':'')+'</div>':'')+'</div>'}).join('')+'</div>'
-   +'<div class="win-f">Lanjut ke heat berikutnya dalam <span class="hold-n">'+n+'</span> dtk</div>';
-  ov.hidden=false;
+  const ri=hold?rs.findIndex(r=>r.sp.short===hold.k):-1,rd=ri>=0?rs[ri]:null;
+  if(!rd||!rd.heats[hold.h]){hideWinner();return}
+  const sig=hold.id+'|'+hold.kind;
+  if(!ov.hidden&&ov.dataset.sig===sig&&!ov.classList.contains('out')){const n=Math.max(0,Math.ceil((hold.until-Date.now())/1000));ov.querySelectorAll('.hold-n').forEach(e=>e.textContent=n);return}
+  const show=showScore(rd,hold.h),n=Math.max(0,Math.ceil((hold.until-Date.now())/1000)),tag=rd.sp.label+' · Heat '+(hold.h+1);
+  const person=(id,sc)=>'<div class="win-one"><div class="win-n">'+esc(E.nameOf(id))+'</div><div class="win-s">'+esc(E.shopOf(id)||'')+'</div>'+(sc?'<div class="win-sc">'+esc(sc)+(st.judges?' suara':'')+'</div>':'')+'</div>';
+  let html,cls='';
+  if(hold.kind==='tie'){
+    const ev=rd.evals[hold.h],ids=rd.heats[hold.h].map(m=>m.id).filter(id=>id!=null),sc=id=>ev&&ev.sc?ev.sc(id):null;
+    const top=Math.max(...ids.map(id=>sc(id)==null?-1:sc(id))),tied=ids.filter(id=>sc(id)===top);
+    if(!tied.length){hideWinner();return}
+    cls=' tie';
+    html='<div class="win-k">'+esc(tag)+'</div><div class="win-big">Seri!</div>'
+      +'<div class="win-list'+(tied.length>1?' multi':'')+'">'+tied.map(id=>person(id,show?scoreOf(rd.sp.short,id):'')).join('')+'</div>'
+      +'<div class="win-msg">Juri keempat dari panitia memberikan penilaian tambahan</div>';
+  }else{
+    const ids=rd.heats[hold.h].map(m=>m.id).filter(id=>id!=null&&rd.status.get(id)==='win');
+    if(!ids.length){hideWinner();return}
+    const nx=rs[ri+1],to=nx?nx.sp.label:'';
+    html='<div class="win-k">'+esc(tag)+'</div><div class="win-crown">'+CROWN+'</div>'
+      +'<div class="win-big">'+(to?(ids.length>1?'Lolos ke '+esc(to):'Lolos ke '+esc(to)):'Pemenang')+'</div>'
+      +'<div class="win-list'+(ids.length>1?' multi':'')+'">'+ids.map(id=>person(id,show?scoreOf(rd.sp.short,id):'')).join('')+'</div>';
+  }
+  html+='<div class="win-f">Pop-up tertutup dalam <span class="hold-n">'+n+'</span> dtk</div>';
+  clearTimeout(hideT);ov.classList.remove('out');ov.className='win-ov'+cls;ov.dataset.sig=sig;ov.innerHTML=html;ov.hidden=false;
 }
 let nextKey='',nextIO=null;
 function renderNext(rs,lv,finished){
   const el=$('#next');
   const items=[];
-  rs.forEach((rd,ri)=>rd.heats.forEach((h,hi)=>{const t=E.heatState(rd,hi);if(t==='bye')return;items.push({rd,hi,t,live:!finished&&ri===lv.ri&&hi===lv.hi})}));
+  rs.forEach((rd,ri)=>rd.heats.forEach((h,hi)=>{const t=E.heatState(rd,hi);if(t==='bye')return;items.push({rd,hi,t,live:!finished&&ri===lv.ri&&hi===lv.hi,k:rd.sp.short+'-'+hi})}));
   let nextI=-1;const li=items.findIndex(x=>x.live);
   for(let i=Math.max(0,li+1);i<items.length;i++)if(items[i].t!=='done'){nextI=i;break}
-  const card=(x,i)=>{
+  const view=(x,i)=>{
     const {rd,hi}=x,title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1),sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
-    const cls=x.live?'live':x.t==='done'?'done':i===nextI?'next':'later',tag=x.live?'<b class="nx-t live">Sedang bertanding</b>':x.t==='done'?'<b class="nx-t">Selesai</b>':i===nextI?'<b class="nx-t nxt">Berikutnya</b>':'';
-    const mem=rd.heats[hi].map(m=>m.id!=null?'<li'+(x.t==='done'&&rd.status.get(m.id)==='win'?' class="w"':'')+'><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></li>':'<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>').join('');
-    return '<article class="nx '+cls+'" data-k="'+esc(rd.sp.short)+'-'+hi+'"><span class="nx-k">'+title+tag+'<small>'+esc(sub)+'</small></span><ul>'+mem+'</ul></article>';
+    const base=x.live?'live':x.t==='done'?'done':i===nextI?'next':'later';
+    const tag=x.live?'<b class="nx-t live">Sedang bertanding</b>':x.t==='done'?'<b class="nx-t">Selesai</b>':i===nextI?'<b class="nx-t nxt">Berikutnya</b>':'';
+    const done=x.t==='done';
+    const mem=rd.heats[hi].map(m=>{if(m.id==null)return '<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>';
+      const w=done&&rd.status.get(m.id)==='win',sc=done?scoreOf(rd.sp.short,m.id):'';
+      return '<li'+(done?(w?' class="w"':' class="l"'):'')+'><span><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></span>'+(w?'<em class="nx-w">LOLOS</em>':sc?'<em class="nx-sc">'+esc(sc)+'</em>':'')+'</li>'}).join('');
+    return {k:x.k,base,html:'<span class="nx-k">'+title+tag+'<small>'+esc(sub)+'</small></span><ul>'+mem+'</ul>'};
   };
-  el.innerHTML='<div class="nx-h">Semua heat</div><div class="nx-grid">'+items.map(card).join('')+'</div>';
+  const vs=items.map(view);
+  let grid=el.querySelector('.nx-grid');
+  const keys=grid?[...grid.children].map(c=>c.dataset.k).join():'',want=vs.map(v=>v.k).join();
+  if(!grid||keys!==want){
+    el.innerHTML='<div class="nx-h">Semua heat</div><div class="nx-grid">'+vs.map(v=>'<article class="nx '+v.base+' fresh" data-k="'+esc(v.k)+'">'+v.html+'</article>').join('')+'</div>';
+    grid=el.querySelector('.nx-grid');
+    if(nextIO){nextIO.disconnect();nextIO=null}
+  }else{
+    /* perbarui kartu yang ada, bukan membuat ulang: transisi warna jadi halus */
+    vs.forEach((v,i)=>{const n=grid.children[i],vis=n.classList.contains('vis');
+      {n.className='nx '+v.base+(v.base==='later'&&vis?' vis':'')}
+      if(n.dataset.h!==v.html){n.innerHTML=v.html;n.dataset.h=v.html}});
+  }
+  vs.forEach((v,i)=>{grid.children[i].dataset.base=v.base;grid.children[i].dataset.h=v.html});
   /* heat yang belum aktif diburamkan; jelas kembali begitu digulir ke area atas */
-  if(nextIO)nextIO.disconnect();
-  if('IntersectionObserver' in window){nextIO=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('vis',e.isIntersecting)),{root:desk()?el:null,rootMargin:'0px 0px -55% 0px'});el.querySelectorAll('.nx.later').forEach(n=>nextIO.observe(n))}
-  else el.querySelectorAll('.nx.later').forEach(n=>n.classList.add('vis'));
-  /* gulir otomatis ke heat yang sedang/akan bertanding bila berubah */
-  const key=(li>=0?items[li].rd.sp.short+'-'+items[li].hi:'end');
-  if(key!==nextKey){nextKey=key;const t=el.querySelector('.nx.live')||el.querySelector('.nx.next');if(t&&desk())requestAnimationFrame(()=>{el.scrollTop=Math.max(0,t.offsetTop-el.offsetTop-8)})}
+  if('IntersectionObserver' in window){
+    if(!nextIO)nextIO=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('vis',e.isIntersecting)),{root:desk()?el:null,rootMargin:'0px 0px -55% 0px'});
+    grid.querySelectorAll('.nx.later').forEach(n=>nextIO.observe(n));
+  }else grid.querySelectorAll('.nx.later').forEach(n=>n.classList.add('vis'));
+  /* gulir halus ke heat yang sedang/akan bertanding bila berubah */
+  const key=(li>=0?items[li].k:'end');
+  if(key!==nextKey){nextKey=key;const t=grid.querySelector('.nx.live')||grid.querySelector('.nx.next');if(t&&desk())requestAnimationFrame(()=>el.scrollTo({top:Math.max(0,t.offsetTop-el.offsetTop-8),behavior:reduce?'auto':'smooth'}))}
 }
 function renderRoster(){
   const ids=[...Array(st.count).keys()].map(id=>({id,n:E.nameOf(id),s:E.shopOf(id)})).sort((a,b)=>a.n.localeCompare(b.n,'id',{sensitivity:'base'})||a.s.localeCompare(b.s,'id',{sensitivity:'base'}));
@@ -521,7 +584,7 @@ function render(){
   const key=finished?'end':lv.ri+'-'+lv.hi;
   if(key!==lastLive){const first=!lastLive;lastLive=key;requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToLive(first)))}
   champion(fin,finished&&!board);
-  renderWinner(rs,lv);
+  renderWinner(rs);
   rendered=true;
 }
 function renderNow(rs,lv,finished){
@@ -530,7 +593,7 @@ function renderNow(rs,lv,finished){
   n.querySelector('b').textContent=board?(prov?'SEMENTARA':st.dday?'HARI H':'UNDIAN'):finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
   if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.dday?'Bagan lengkap':'Undian final · pengacakan ke-'+st.draws;return}
-  if(hold&&!finished){$('#nowTxt').textContent=rd.sp.label+' · Hasil heat';return}
+  if(hold&&!finished){$('#nowTxt').textContent=rd.sp.label+(hold.kind==='tie'?' · Seri':' · Hasil heat');return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){
