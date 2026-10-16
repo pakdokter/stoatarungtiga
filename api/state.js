@@ -36,6 +36,23 @@ export default async function handler(req, res) {
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
       if (!body || typeof body !== 'object' || typeof body.count !== 'number') return res.status(400).json({ error: 'Data tidak valid.' });
+      // Penguncian dijaga di server: tahap hanya naik, dan data yang sudah dikunci tidak bisa diubah.
+      const curRaw = await redis(['GET', KEY]);
+      const cur = curRaw ? JSON.parse(curRaw) : null;
+      if (cur && (+cur.stage || 0) > 0) {
+        const cs = +cur.stage || 0, ns = +body.stage || 0;
+        const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+        let why = '';
+        if (ns < cs) why = 'Penguncian tidak bisa dibuka lagi.';
+        else if (ns > cs + 1) why = 'Tahap penguncian tidak boleh dilompati.';
+        else if (!same(cur.names, body.names) || cur.count !== body.count) why = 'Daftar peserta sudah dikunci.';
+        else if (cs >= 2 && (!same(cur.order, body.order) || ['mode', 'target', 'rem', 'semi', 'final', 'rows'].some(k => !same(cur[k], body[k])))) why = 'Undian sudah final dan tidak bisa diubah.';
+        else if ((+body.draws || 0) < (+cur.draws || 0)) why = 'Jumlah pengacakan tidak bisa dikurangi.';
+        else if (ns === 2 && cs === 1 && !((+body.draws || 0) >= 1)) why = 'Acak undian minimal sekali sebelum dikunci final.';
+        if (why) return res.status(409).json({ error: why, state: cur });
+      } else if ((+body.stage || 0) > 1) {
+        return res.status(409).json({ error: 'Tahap penguncian tidak boleh dilompati.', state: cur });
+      }
       const str = JSON.stringify(body);
       if (str.length > 400000) return res.status(413).json({ error: 'Data terlalu besar.' });
       await redis(['SET', KEY, str]);

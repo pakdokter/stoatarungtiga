@@ -24,6 +24,16 @@ npx vercel --prod
 Tanpa database, halaman tetap jalan dalam **mode lokal**: layar peserta hanya ikut berubah
 di perangkat yang sama dengan admin (misalnya laptop panitia + jendela kedua di proyektor).
 
+## Alur hari undian (penguncian)
+
+1. **Daftar peserta**: layar peserta (`/`) menampilkan semua nama dan coffeeshop. Admin mengedit daftar di `/admin`.
+2. **Kunci daftar peserta** (ketik `KUNCI`): nama tidak bisa ditambah, dikurangi, atau diganti lagi.
+3. **Acak undian**: bisa ditekan berkali-kali. Tiap pengacakan diputar langsung di layar peserta dan bagan sementara tampil dengan label "belum final".
+4. **Kunci undian final** (ketik `FINAL`): susunan heat dan format bracket tidak bisa diubah. Skor tetap bisa diisi.
+
+Penguncian tidak bisa dibuka dari admin dan dijaga di server (`api/state.js` menolak perubahan dengan status 409).
+Darurat: hapus key `tarung-tiga-stoa:state` di Upstash Redis untuk mengulang dari awal.
+
 ## Mode layar peserta
 
 Di admin (bar atas bagan) pilih **Layar peserta**:

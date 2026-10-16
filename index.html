@@ -309,6 +309,18 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 @keyframes lock{from{background:var(--gold-fill)}}
 .hc.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.8),var(--shadow)}
 
+/* daftar peserta (tampilan awal) */
+.roster{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.ro-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;font-weight:700;font-size:clamp(16px,1.6vw,22px);color:var(--green)}
+.ro-sum span{color:var(--muted);font-weight:600;font-size:.8em}
+.ro-grid{align-content:start;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
+.ro-it{display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:12px;background:var(--card);border:2px solid var(--line)}
+.ro-no{flex:none;width:2.2em;text-align:center;font-weight:900;font-size:clamp(15px,1.4vw,20px);color:var(--green)}
+.ro-n{display:block;font-weight:800;font-size:clamp(16px,1.5vw,22px);line-height:1.15}
+.ro-s{display:block;font-weight:600;font-size:clamp(13.5px,1.2vw,17px);color:var(--muted);line-height:1.2}
+.ro-note{margin:0;font-size:clamp(13.5px,1.2vw,16px);font-weight:600;color:var(--muted)}
+.banner{padding:8px 14px;border-radius:12px;background:var(--gold-fill);color:var(--ink);font-weight:800;font-size:clamp(14px,1.3vw,18px)}
+@media (min-width:900px) and (min-height:600px){.screen.is-roster{grid-template-rows:auto minmax(0,1fr)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -323,6 +335,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
   </header>
   <ol class="steps" id="steps" aria-label="Babak"></ol>
   <section class="spot" id="spot" aria-live="polite"></section>
+  <section class="roster" id="roster" hidden aria-label="Daftar peserta"></section>
   <div class="scroller" id="scroller"><div class="bracket" id="bracket"></div></div>
 </div>
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Stoa Fun Brewing Competition"></div>
@@ -367,8 +380,24 @@ function tagOf(rd,s){return s==='win'?'Lolos':s==='ll'?(rd.a===0?'Skor terbaik':
 const roundDone=rd=>rd.heats.every((h,hi)=>{const s=E.heatState(rd,hi);return s==='done'||s==='bye'});
 
 /* ---------- render ---------- */
+function renderRoster(){
+  const ids=[...Array(st.count).keys()].map(id=>({id,n:E.nameOf(id),s:E.shopOf(id)})).sort((a,b)=>a.n.localeCompare(b.n,'id',{sensitivity:'base'})||a.s.localeCompare(b.s,'id',{sensitivity:'base'}));
+  const shops=new Set(ids.map(p=>p.s.toLowerCase()).filter(Boolean)).size;
+  $('#roster').innerHTML='<div class="ro-sum">'+st.count+' peserta<span>'+shops+' coffeeshop · urut abjad</span></div>'
+   +'<ul class="ro-grid">'+ids.map((p,i)=>'<li class="ro-it"><span class="ro-no">'+(i+1)+'</span><span><b class="ro-n">'+esc(p.n)+'</b><span class="ro-s">'+esc(p.s||' ')+'</span></span></li>').join('')+'</ul>'
+   +'<p class="ro-note">'+(st.stage>=1?'Daftar peserta sudah dikunci.':'Daftar peserta masih bisa berubah sampai dikunci panitia.')+' Pengacakan heat akan tampil di layar ini, terbuka untuk semua peserta.</p>';
+}
 function render(){
   if(!st){rendered=true;return}
+  const roster=st.stage<2&&!st.draws;
+  document.body.classList.toggle('m-roster',roster);$('.screen').classList.toggle('is-roster',roster);
+  $('#roster').hidden=!roster;$('#scroller').hidden=roster;
+  if(roster){
+    $('#steps').innerHTML='';$('#spot').innerHTML='';renderRoster();
+    const n=$('#now');n.hidden=false;n.classList.toggle('done',st.stage>=1);n.querySelector('b').textContent=st.stage>=1?'TERKUNCI':'PESERTA';
+    $('#nowTxt').textContent=st.stage>=1?'Daftar final · menunggu pengacakan':'Daftar peserta';
+    lastRound='';lastLive='';rendered=true;return;
+  }
   const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim);
   const fin=rs[rs.length-1],finished=roundDone(fin),lr=rs[lv.ri];
   /* mode tampilan: final dominan, fokus saat 9 besar ke bawah */
@@ -388,9 +417,10 @@ function render(){
 function renderNow(rs,lv,finished){
   const n=$('#now');n.hidden=false;n.classList.toggle('done',finished);
   const board=st.view!=='live';
-  n.querySelector('b').textContent=board?'UNDIAN':finished?'SELESAI':'LIVE';
+  const prov=st.stage<2;
+  n.querySelector('b').textContent=board?(prov?'SEMENTARA':'UNDIAN'):finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
-  if(board){$('#nowTxt').textContent='Bagan pertandingan';return}
+  if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.draws?'Undian final · pengacakan ke-'+st.draws:'Bagan pertandingan';return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){
@@ -561,6 +591,7 @@ function fitTo(sc,br){
   br.style.zoom=z.toFixed(3);
 }
 function fit(){
+  if(document.body.classList.contains('m-roster'))return;
   const sc=$('#scroller'),br=$('#bracket');
   if(document.body.classList.contains('m-board')){fitTo(sc,br);return}
   br.style.zoom='';

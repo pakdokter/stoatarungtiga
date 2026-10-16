@@ -221,6 +221,15 @@ a.btn{text-decoration:none;color:inherit}
 .gate p{margin:0;color:var(--muted);font-size:14px}
 .gate input{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:20px;letter-spacing:.25em}
 .gate-err{color:var(--warn)!important;min-height:1.2em}
+.stages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.stg{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.stg.on{border-color:var(--accent,#1F5C22);box-shadow:0 0 0 2px color-mix(in srgb,#1F5C22 22%,transparent)}
+.stg.done{opacity:.75}
+.stg b{font-size:15px}.stg small{color:var(--muted);font-size:13px}
+.stg .btn:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
+.is-locked{pointer-events:none;opacity:.55}
+.gate input.cf{letter-spacing:.1em;text-transform:uppercase}
+#confirmGate p b{color:var(--ink)}
 :root{--live:#C4302B}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--live:#F0625B}}
 :root[data-theme="dark"]{--live:#F0625B}
@@ -242,6 +251,18 @@ a.btn{text-decoration:none;color:inherit}
 
   <div class="layout">
     <aside class="setup">
+      <section class="panel" aria-labelledby="h-kunci">
+        <div class="panel-h"><h2 id="h-kunci">Tahap &amp; penguncian</h2><span class="pill" id="stagePill"></span></div>
+        <ol class="stages">
+          <li class="stg" id="stg0"><b>1. Daftar peserta</b><small id="stg0t"></small>
+            <button class="btn primary" id="lockList" type="button">Kunci daftar peserta</button></li>
+          <li class="stg" id="stg1"><b>2. Pengacakan di layar peserta</b><small id="stg1t"></small></li>
+          <li class="stg" id="stg2"><b>3. Undian final</b><small id="stg2t"></small>
+            <button class="btn danger" id="lockFinal" type="button">Kunci undian final</button></li>
+        </ol>
+        <p class="hint">Setiap penguncian tidak bisa dibuka lagi dari halaman ini dan dijaga juga oleh server.</p>
+      </section>
+
       <section class="panel" aria-labelledby="h-peserta">
         <div class="panel-h"><h2 id="h-peserta">Peserta</h2><span class="pill" id="samplePill">Data contoh</span></div>
         <div class="field-row">
@@ -368,6 +389,16 @@ a.btn{text-decoration:none;color:inherit}
     <button class="btn primary" type="submit" id="gateBtn">Masuk</button>
   </form>
 </div>
+<div class="gate" id="confirmGate" hidden>
+  <form id="confirmForm">
+    <h2 id="cfTitle">Konfirmasi</h2>
+    <p id="cfText"></p>
+    <label class="lbl" for="cfInput" style="margin:0">Ketik <b id="cfWord"></b> untuk melanjutkan</label>
+    <input class="cf" id="cfInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false">
+    <p class="gate-err" id="cfErr"></p>
+    <div class="btns"><button class="btn" type="button" id="cfCancel">Batal</button><button class="btn danger" type="submit" id="cfOk" disabled>Kunci</button></div>
+  </form>
+</div>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -394,6 +425,7 @@ async function push(){
   try{const c=await Sync.put(st,pin);
     if(c===200)setSync('ok','Tersinkron '+clock());
     else if(c===401){pin='';lock('PIN sudah berubah. Masukkan PIN baru.')}
+    else if(c===409){const r=await Sync.get();if(r.state){st=normalize(r.state);lsSet(KEY,JSON.stringify(st));render()}setSync('ok','Ditolak server: data terkunci');toast('Server menolak perubahan: data sudah terkunci. Tampilan dimuat ulang.')}
     else{setSync('err','Gagal sinkron ('+c+'), mencoba lagi');pushT=setTimeout(push,5000)}
   }catch(e){setSync('err','Offline, mencoba lagi');pushT=setTimeout(push,5000)}
 }
@@ -422,6 +454,7 @@ async function initSync(){
 /* ---------- render ---------- */
 function fmtDur(m){const h=Math.floor(m/60),mm=m%60;return h?h+' j '+mm+' m':mm+' m'}
 function renderSetup(sim){
+  renderStage();
   const N=st.count,E=eOf(),F=st.final;
   const cnt=$('#count');if(document.activeElement!==cnt)cnt.value=N;
   const ta=$('#names');if(document.activeElement!==ta)ta.value=st.names.join('\n');
@@ -557,13 +590,14 @@ function render(){
 /* ---------- actions ---------- */
 let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2800)}
 function hasScores(){return Object.values(st.res).some(r=>r&&Object.keys(r).length)}
-function planChanged(){if(hasScores())toast('Format berubah, skor direset');st.res={};st.live=null;st.llPick={};st.llDraw={};save();render()}
-function setCount(n){n=Math.max(3,Math.min(256,Math.round(+n)||3));if(n===st.count){render();return}
+function planChanged(){if(st.stage>=2){toast('Undian sudah final, format tidak bisa diubah');return}if(hasScores())toast('Format berubah, skor direset');st.res={};st.live=null;st.llPick={};st.llDraw={};save();render()}
+function locked(m){if(st.stage>=1){toast(m||'Daftar peserta sudah dikunci');return true}return false}
+function setCount(n){if(locked())return;n=Math.max(3,Math.min(256,Math.round(+n)||3));if(n===st.count){render();return}
   st.count=n;st.order=[...Array(n).keys()];autoPlan();planChanged()}
 function parseNames(txt){return txt.split(/\r?\n/).map(line=>{let cells=line.split('\t').map(c=>c.trim()).filter(Boolean);
   if(cells.length>1&&/^\d+[.)]?$/.test(cells[0]))cells=cells.slice(1);
   const v=cells.length>1?cells[0]+' - '+cells[1]:(cells[0]||'');return v.replace(/^\d+[.)]\s+/,'').trim()}).filter(Boolean)}
-function applyNames(names){st.names=names;st.sample=false;$('#names').value=names.join('\n');
+function applyNames(names){if(locked())return;st.names=names;st.sample=false;$('#names').value=names.join('\n');
   if(names.length>=3&&names.length!==st.count)setCount(names.length);else{save();render()}}
 function pickNames(rows){
   rows=rows.filter(r=>r&&r.some(c=>String(c).trim()));if(!rows.length)return[];
@@ -577,7 +611,7 @@ function pickNames(rows){
   else if(rows[0].length>col+1&&rows.every(r=>String(r[col+1]==null?'':r[col+1]).trim()))sc=col+1;
   return rows.slice(start).map(r=>{const n=String(r[col]==null?'':r[col]).trim(),s=sc>=0?String(r[sc]==null?'':r[sc]).trim():'';return n?(s?n+' - '+s:n):''}).filter(Boolean);
 }
-async function importFile(f){
+async function importFile(f){if(locked())return;
   try{let rows;
     if(window.XLSX){const wb=XLSX.read(await f.arrayBuffer(),{type:'array'});rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:''})}
     else rows=(await f.text()).split(/\r?\n/).map(l=>l.split(/\t|;|,/));
@@ -601,16 +635,45 @@ function drawOrder(){let best=null,bc=1e9;for(let i=0;i<400&&bc>0;i++){const o=s
 
 /* ---------- events ---------- */
 $('#count').addEventListener('change',e=>setCount(e.target.value));
-let nt;$('#names').addEventListener('input',e=>{clearTimeout(nt);nt=setTimeout(()=>{const names=parseNames(e.target.value);st.names=names;st.sample=false;
+let nt;$('#names').addEventListener('input',e=>{if(st.stage>=1)return;clearTimeout(nt);nt=setTimeout(()=>{const names=parseNames(e.target.value);st.names=names;st.sample=false;
   if(names.length>=3&&names.length!==st.count)setCount(names.length);else{save();render()}},350)});
 const ta=$('#names');
 ['dragenter','dragover'].forEach(ev=>ta.addEventListener(ev,e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files')){e.preventDefault();ta.classList.add('drag')}}));
 ['dragleave','drop'].forEach(ev=>ta.addEventListener(ev,()=>ta.classList.remove('drag')));
 ta.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(f){e.preventDefault();importFile(f)}});
 $('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)importFile(f);e.target.value=''});
-$('#shuffle').addEventListener('click',()=>{const d=drawOrder();st.order=d.order;const had=hasScores();st.res={};st.live=null;save();render();
-  toast((had?'Undian baru, skor direset. ':'Undian diacak. ')+(d.clash?d.clash+' heat babak awal masih berisi rekan satu coffeeshop':'Tidak ada rekan satu coffeeshop di heat yang sama'))});
+$('#shuffle').addEventListener('click',()=>{if(st.stage!==1){toast(st.stage===0?'Kunci daftar peserta dulu sebelum mengacak':'Undian sudah final');return}const d=drawOrder();st.order=d.order;const had=hasScores();st.res={};st.live=null;st.draws=(st.draws||0)+1;st.drawShow={id:Date.now()};save();render();
+  toast('Pengacakan ke-'+st.draws+' ditayangkan di layar peserta. '+(had?'Skor direset. ':'')+(d.clash?d.clash+' heat babak awal masih berisi rekan satu coffeeshop':'Tidak ada rekan satu coffeeshop di heat yang sama'))});
 $('#showDraw').addEventListener('click',()=>{st.drawShow={id:Date.now()};save();toast('Undian ditayangkan di layar peserta (sesuai susunan heat saat ini)')});
+
+/* ---------- penguncian bertahap ---------- */
+let cfAct=null;
+function askConfirm(o){cfAct=o.run;$('#cfTitle').textContent=o.title;$('#cfText').innerHTML=o.text;$('#cfWord').textContent=o.word;$('#cfOk').textContent=o.ok;$('#cfOk').dataset.word=o.word;$('#cfInput').value='';$('#cfOk').disabled=true;$('#cfErr').textContent='';$('#confirmGate').hidden=false;setTimeout(()=>$('#cfInput').focus(),60)}
+$('#cfInput').addEventListener('input',e=>{$('#cfOk').disabled=e.target.value.trim().toUpperCase()!==$('#cfOk').dataset.word});
+$('#cfCancel').addEventListener('click',()=>{$('#confirmGate').hidden=true;cfAct=null});
+$('#confirmForm').addEventListener('submit',e=>{e.preventDefault();if($('#cfOk').disabled)return;$('#confirmGate').hidden=true;const f=cfAct;cfAct=null;if(f)f()});
+$('#lockList').addEventListener('click',()=>{if(st.stage!==0)return;
+  askConfirm({title:'Kunci daftar peserta',word:'KUNCI',ok:'Kunci daftar',text:'Daftar <b>'+st.count+' peserta</b> tidak akan bisa ditambah, dikurangi, atau diganti lagi. Pastikan nama dan coffeeshop sudah benar.',
+  run:()=>{st.stage=1;save();render();toast('Daftar peserta dikunci. Sekarang bisa diacak di depan peserta.')}})});
+$('#lockFinal').addEventListener('click',()=>{if(st.stage!==1||!st.draws)return;
+  askConfirm({title:'Kunci undian final',word:'FINAL',ok:'Kunci final',text:'Susunan heat dari <b>pengacakan ke-'+st.draws+'</b> menjadi final. Setelah ini tidak bisa diacak ulang, dan format bracket tidak bisa diubah.',
+  run:()=>{st.stage=2;save();render();toast('Undian final dikunci.')}})});
+function renderStage(){
+  const s=st.stage||0;
+  $('#stagePill').textContent=['Daftar terbuka','Daftar terkunci','Undian final'][s];
+  [0,1,2].forEach(i=>{const el=$('#stg'+i);el.classList.toggle('on',s===i);el.classList.toggle('done',s>i)});
+  $('#stg0t').textContent=s===0?'Masih bisa diedit. Kunci jika sudah benar.':'Terkunci ('+st.count+' peserta).';
+  $('#stg1t').textContent=s===0?'Menunggu daftar dikunci.':s===1?('Tekan "Acak undian" berkali-kali; tiap pengacakan tampil di layar peserta. Sudah '+(st.draws||0)+' kali.'):('Selesai ('+(st.draws||0)+' kali pengacakan).');
+  $('#stg2t').textContent=s===2?'Terkunci. Susunan heat tidak bisa diubah.':s===1?(st.draws?'Siap dikunci setelah susunan heat dipilih.':'Acak minimal sekali dulu.'):'Menunggu pengacakan.';
+  $('#lockList').hidden=s!==0;$('#lockFinal').hidden=s!==1;$('#lockFinal').disabled=!st.draws;
+  const L=s>=1;
+  $('#names').readOnly=L;$('#count').disabled=L;
+  document.querySelector('label[for="file"]').classList.toggle('is-locked',L);
+  $('#file').disabled=L;$('#seed').disabled=L;$('#shuffle').disabled=s!==1;
+  $('#showDraw').disabled=s===0;
+  ['segMode','tchips','segRem','segSemi','chips','prows','addRow'].forEach(id=>{const el=$('#'+id);if(el)el.classList.toggle('is-locked',s>=2)});
+}
+
 /* ---------- absen hari H (A4) ---------- */
 function absenHTML(){
   const rows=st.names.slice(0,st.count).map(x=>splitEntry(x)).filter(p=>p.n)
@@ -638,7 +701,7 @@ $('#absen').addEventListener('click',()=>{
     w.focus();w.print();toast('Pilih "Simpan sebagai PDF" di dialog cetak (kertas A4)')};
   document.body.appendChild(f);
 });
-$('#seed').addEventListener('click',()=>{st.order=[...Array(st.count).keys()];st.res={};st.live=null;save();render();toast('Heat disusun sesuai urutan daftar')});
+$('#seed').addEventListener('click',()=>{if(st.stage>=1){toast('Urutan manual dimatikan setelah daftar dikunci');return}st.order=[...Array(st.count).keys()];st.res={};st.live=null;save();render();toast('Heat disusun sesuai urutan daftar')});
 $('#segMode').addEventListener('click',e=>{const b=e.target.closest('[data-mode]');if(!b)return;st.mode=b.dataset.mode;if(st.mode==='classic'&&!st.rows.length)autoPlan();planChanged()});
 $('#tchips').addEventListener('click',e=>{const b=e.target.closest('[data-target]');if(!b)return;st.target=+b.dataset.target;planChanged()});
 $('#segJudge').addEventListener('click',e=>{const b=e.target.closest('[data-j]');if(!b)return;st.judges=+b.dataset.j;save();render()});

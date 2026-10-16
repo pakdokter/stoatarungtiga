@@ -9,12 +9,12 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', updated: 0 };
+    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
     /* data contoh lama (belum pernah diedit) diganti daftar peserta yang sekarang */
-    if (src && typeof src === 'object' && src.sample === true) { const d = defState(); o.names = d.names; o.count = d.count; o.order = d.order; o.res = {}; o.live = null; o.llPick = {}; o.llDraw = {}; o.sample = false; }
+    if (src && typeof src === 'object' && src.sample === true && !(+src.stage > 0)) { const d = defState(); o.names = d.names; o.count = d.count; o.order = d.order; o.res = {}; o.live = null; o.llPick = {}; o.llDraw = {}; o.sample = false; }
     o.final = 3; o.semi = o.semi ? 3 : 0; o.rem = o.rem === 'two' ? 'two' : 'bye';
     o.count = Math.max(3, Math.min(256, Math.round(+o.count) || 3));
     o.names = Array.isArray(o.names) ? o.names.map(x => String(x == null ? '' : x)) : [];
@@ -29,6 +29,9 @@
     o.target = Math.max(0, Math.round(+o.target) || 0);
     o.beanPrep = Math.max(0, +o.beanPrep || 0); o.beanRound = Math.max(0, +o.beanRound || 0);
     o.view = o.view === 'live' ? 'live' : 'bracket';
+    /* tahap penguncian: 0 = daftar terbuka, 1 = daftar terkunci (boleh diacak), 2 = undian final */
+    o.stage = [0, 1, 2].includes(+o.stage) ? +o.stage : 0;
+    o.draws = Math.max(0, Math.round(+o.draws) || 0);
     o.drawShow = o.drawShow && +o.drawShow.id > 0 ? { id: +o.drawShow.id } : null;
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];
