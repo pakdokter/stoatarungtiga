@@ -581,10 +581,11 @@ function renderBoard(sim){
   let heatsN=0,mins=0;const S=Math.max(1,+st.stations||1),M=Math.max(1,+st.mins||1);
   let brews=0;
   rs.forEach(rd=>{const pl=rd.heats.filter(h=>h.length>1);heatsN+=pl.length;mins+=Math.ceil(pl.length/S)*M;brews+=pl.reduce((a,h)=>a+h.length,0)});
+  mins+=15*Math.max(0,rs.length-1);/* jeda 15 menit tiap peralihan babak */
   const BP=Math.max(0,+st.beanPrep||0),BR=Math.max(0,+st.beanRound||0),beanG=sim.N*BP+brews*BR,
     beanTxt=sim.N+'×'+BP+' g persiapan + '+brews+' seduhan×'+BR+' g';
   const aEl=document.activeElement,keepStat=aEl&&(aEl.id==='mins'||aEl.id==='stations'||aEl.id==='beanPrep'||aEl.id==='beanRound');
-  if(!keepStat)$('#stats').innerHTML='<div><b>'+rs.length+'</b>babak</div><div><b>'+heatsN+'</b>heat bertanding</div><div title="Heat pertama 15.30; tiap heat 7 menit seduh + 1 menit penjurian + 1 menit transisi"><b>≈ '+fmtDur(mins)+'</b>estimasi durasi, selesai ±'+finishAt(mins)+'</div><div title="'+beanTxt+'"><b>'+beanG.toLocaleString('id-ID')+' g</b>total biji kopi</div>'+
+  if(!keepStat)$('#stats').innerHTML='<div><b>'+rs.length+'</b>babak</div><div><b>'+heatsN+'</b>heat bertanding</div><div title="Heat pertama 15.30; tiap heat 7 menit seduh + 1 menit penjurian + 1 menit transisi, jeda 15 menit tiap peralihan babak"><b>≈ '+fmtDur(mins)+'</b>estimasi durasi, selesai ±'+finishAt(mins)+'</div><div title="'+beanTxt+'"><b>'+beanG.toLocaleString('id-ID')+' g</b>total biji kopi</div>'+
     '<label class="stat-in" for="mins"><input id="mins" type="number" min="1" value="'+M+'"> menit/heat</label>'+
     '<label class="stat-in" for="stations"><input id="stations" type="number" min="1" value="'+S+'"> stasiun brew</label>'+
     '<label class="stat-in" for="beanPrep"><input id="beanPrep" type="number" min="0" value="'+BP+'"> g persiapan/peserta</label>'+
