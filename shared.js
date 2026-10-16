@@ -5,11 +5,12 @@
   /* urutan undian awal: tidak ada rekan satu coffeeshop di heat babak pertama yang sama */
   const DEF_ORDER = [13, 23, 25, 14, 8, 5, 7, 2, 17, 22, 15, 9, 20, 24, 6, 12, 4, 19, 3, 16, 10, 21, 0, 11, 1, 18];
   const CROWN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18h18l-1.6-10-4.6 4.2L12 5.5 9.2 12.2 4.6 8z" fill="currentColor"/><rect x="3" y="19.5" width="18" height="2" rx="1" fill="currentColor"/></svg>';
+  const newCode = () => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let c = ''; for (let i = 0; i < 6; i++) c += a[Math.floor(Math.random() * a.length)]; return c; };
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, updated: 0 };
+    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, dday: false, code: '', created: 0, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
@@ -32,6 +33,9 @@
     /* tahap penguncian: 0 = daftar terbuka, 1 = daftar terkunci (boleh diacak), 2 = undian final */
     o.stage = [0, 1, 2].includes(+o.stage) ? +o.stage : 0;
     o.draws = Math.max(0, Math.round(+o.draws) || 0);
+    o.dday = o.stage >= 2 && o.dday === true;
+    o.code = typeof o.code === 'string' ? o.code.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20).toUpperCase() : '';
+    o.created = Math.max(0, +o.created || 0);
     o.drawShow = o.drawShow && +o.drawShow.id > 0 ? { id: +o.drawShow.id } : null;
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];
@@ -259,5 +263,5 @@
     }
   };
 
-  g.TTS = { SAMPLE, CROWN, esc, shuffleArr, defState, normalize, engine, Sync };
+  g.TTS = { SAMPLE, CROWN, newCode, esc, shuffleArr, defState, normalize, engine, Sync };
 })(window);

@@ -16,6 +16,51 @@ async function redis(cmd) {
   return j.result;
 }
 
+const SESS = 'tarung-tiga-stoa:sessions', META = 'tarung-tiga-stoa:meta';
+const metaOf = s => ({ code: s.code, created: s.created || 0, archived: Date.now(), stage: +s.stage || 0, draws: +s.draws || 0, count: s.count });
+
+// Sesi: sesi lama diarsipkan (tidak dihapus), sesi aktif diganti. Hanya lewat PIN admin.
+async function sessions(action, req, res, body) {
+  const archive = async cur => {
+    if (!cur) return;
+    if (!cur.code) cur.code = 'LAMA' + Date.now().toString(36).toUpperCase();
+    await redis(['HSET', SESS, cur.code, JSON.stringify(cur)]);
+    await redis(['HSET', META, cur.code, JSON.stringify(metaOf(cur))]);
+  };
+  const curRaw = await redis(['GET', KEY]);
+  const cur = curRaw ? JSON.parse(curRaw) : null;
+  if (action === 'list') {
+    const flat = (await redis(['HGETALL', META])) || [];
+    const list = [];
+    for (let i = 0; i + 1 < flat.length; i += 2) { try { list.push(JSON.parse(flat[i + 1])); } catch (e) { } }
+    list.sort((a, b) => b.archived - a.archived);
+    return res.status(200).json({ sessions: list, current: cur ? metaOf(cur) : null });
+  }
+  if (action === 'new') {
+    const fresh = body && body.state;
+    if (!fresh || typeof fresh.count !== 'number' || !fresh.code || (+fresh.stage || 0) !== 0) return res.status(400).json({ error: 'Data sesi baru tidak valid.' });
+    if (cur && cur.code === fresh.code) return res.status(409).json({ error: 'Kode sesi sudah dipakai.', state: cur });
+    await archive(cur);
+    fresh.updated = Date.now();
+    await redis(['SET', KEY, JSON.stringify(fresh)]);
+    return res.status(200).json({ ok: true, state: fresh });
+  }
+  if (action === 'restore') {
+    const code = String((req.query && req.query.code) || '').toUpperCase();
+    const raw = code ? await redis(['HGET', SESS, code]) : null;
+    if (!raw) return res.status(404).json({ error: 'Sesi tidak ditemukan.' });
+    const target = JSON.parse(raw);
+    if (cur && cur.code === target.code) return res.status(200).json({ ok: true, state: cur });
+    await archive(cur);
+    await redis(['HDEL', SESS, code]);
+    await redis(['HDEL', META, code]);
+    target.updated = Date.now();
+    await redis(['SET', KEY, JSON.stringify(target)]);
+    return res.status(200).json({ ok: true, state: target });
+  }
+  return res.status(400).json({ error: 'Aksi tidak dikenal.' });
+}
+
 export default async function handler(req, res) {
   if (!REDIS_URL || !REDIS_TOKEN) {
     res.setHeader('Cache-Control', 'no-store');
@@ -35,10 +80,13 @@ export default async function handler(req, res) {
       if (req.query && req.query.check) return res.status(200).json({ ok: true });
       let body = req.body;
       if (typeof body === 'string') body = JSON.parse(body);
+      const action = req.query && req.query.action;
+      if (action) return await sessions(action, req, res, body);
       if (!body || typeof body !== 'object' || typeof body.count !== 'number') return res.status(400).json({ error: 'Data tidak valid.' });
       // Penguncian dijaga di server: tahap hanya naik, dan data yang sudah dikunci tidak bisa diubah.
       const curRaw = await redis(['GET', KEY]);
       const cur = curRaw ? JSON.parse(curRaw) : null;
+      if (cur && cur.code && body.code && cur.code !== body.code) return res.status(409).json({ error: 'Sesi sudah berganti. Muat ulang.', state: cur });
       if (cur && (+cur.stage || 0) > 0) {
         const cs = +cur.stage || 0, ns = +body.stage || 0;
         const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);

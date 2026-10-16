@@ -221,6 +221,10 @@ a.btn{text-decoration:none;color:inherit}
 .gate p{margin:0;color:var(--muted);font-size:14px}
 .gate input{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:20px;letter-spacing:.25em}
 .gate-err{color:var(--warn)!important;min-height:1.2em}
+.sess-code{font-family:var(--mono);font-weight:900;letter-spacing:.14em;font-size:20px;color:#1F5C22}
+.sess-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sess-list li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-size:14px}
+.sess-list b{letter-spacing:.1em}.sess-list small{display:block;color:var(--muted)}
 .stages{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .stg{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
 .stg.on{border-color:var(--accent,#1F5C22);box-shadow:0 0 0 2px color-mix(in srgb,#1F5C22 22%,transparent)}
@@ -259,8 +263,17 @@ a.btn{text-decoration:none;color:inherit}
           <li class="stg" id="stg1"><b>2. Pengacakan di layar peserta</b><small id="stg1t"></small></li>
           <li class="stg" id="stg2"><b>3. Undian final</b><small id="stg2t"></small>
             <button class="btn danger" id="lockFinal" type="button">Kunci undian final</button></li>
+          <li class="stg" id="stg3"><b>4. Mode hari H</b><small id="stg3t"></small>
+            <button class="btn" id="ddayBtn" type="button"></button></li>
         </ol>
         <p class="hint">Setiap penguncian tidak bisa dibuka lagi dari halaman ini dan dijaga juga oleh server.</p>
+      </section>
+
+      <section class="panel" aria-labelledby="h-sesi">
+        <div class="panel-h"><h2 id="h-sesi">Sesi</h2><span class="sess-code" id="sessCode">······</span></div>
+        <p class="hint">Kode sesi ini muncul di layar peserta dan harus diketik saat mengunci daftar atau undian. Sesi baru tidak menghapus sesi lama; sesi lama diarsipkan dan bisa dibuka lagi.</p>
+        <div class="btns"><button class="btn" id="newSess" type="button">Mulai sesi baru</button></div>
+        <ul class="sess-list" id="sessList" aria-label="Sesi tersimpan"></ul>
       </section>
 
       <section class="panel" aria-labelledby="h-peserta">
@@ -405,7 +418,7 @@ a.btn{text-decoration:none;color:inherit}
 <script src="shared.js"></script>
 <script>
 (function(){
-const {esc,shuffleArr,normalize,engine,CROWN,Sync}=TTS;
+const {esc,shuffleArr,normalize,engine,CROWN,Sync,newCode}=TTS;
 const KEY='tarung-tiga-stoa-v1',PINKEY='tarung-tiga-stoa-pin';
 const $=s=>document.querySelector(s);
 const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
@@ -434,7 +447,7 @@ $('#gateForm').addEventListener('submit',async e=>{e.preventDefault();const v=$(
   const b=$('#gateBtn');b.disabled=true;b.textContent='Memeriksa…';
   let c=0;try{c=await Sync.check(v)}catch(err){}
   b.disabled=false;b.textContent='Masuk';
-  if(c===200){pin=v;lsSet(PINKEY,v);$('#gate').hidden=true;$('#pin').value='';push()}
+  if(c===200){pin=v;lsSet(PINKEY,v);$('#gate').hidden=true;$('#pin').value='';push();renderSessions()}
   else $('#gateErr').textContent=c===401?'PIN salah.':c===503?'ADMIN_PIN belum diisi di Environment Variables Vercel.':'Server tidak bisa dihubungi. Coba lagi.';
 });
 async function initSync(){
@@ -444,11 +457,11 @@ async function initSync(){
     if(remote.state&&(remote.state.updated||0)>(st.updated||0)){st=normalize(remote.state);lsSet(KEY,JSON.stringify(st));render();toast('Data terbaru dimuat dari server')}
     const saved=lsGet(PINKEY)||'';let c=0;
     if(saved){try{c=await Sync.check(saved)}catch(e){}}
-    if(c===200){pin=saved;push()}else lock(saved?'PIN tersimpan tidak berlaku lagi.':'');
-  }else if(remote.configured){setSync('err','Server error, cek database')}
+    if(c===200){pin=saved;ensureCode();push()}else{ensureCode();lock(saved?'PIN tersimpan tidak berlaku lagi.':'')}
+  }else if(remote.configured){setSync('err','Server error, cek database');ensureCode()}
   else{setSync('local','Mode lokal');const mb=$('#modebar');mb.hidden=false;
     mb.innerHTML='<b>Mode lokal.</b> Layar peserta hanya ikut berubah di perangkat ini (buka di tab/jendela lain, misalnya jendela yang ditarik ke proyektor). Supaya tersinkron ke HP peserta, hubungkan Upstash Redis di Vercel dan isi ADMIN_PIN.';
-    Sync.local(st)}
+    ensureCode();Sync.local(st)}
 }
 
 /* ---------- render ---------- */
@@ -648,15 +661,15 @@ $('#showDraw').addEventListener('click',()=>{st.drawShow={id:Date.now()};save();
 
 /* ---------- penguncian bertahap ---------- */
 let cfAct=null;
-function askConfirm(o){cfAct=o.run;$('#cfTitle').textContent=o.title;$('#cfText').innerHTML=o.text;$('#cfWord').textContent=o.word;$('#cfOk').textContent=o.ok;$('#cfOk').dataset.word=o.word;$('#cfInput').value='';$('#cfOk').disabled=true;$('#cfErr').textContent='';$('#confirmGate').hidden=false;setTimeout(()=>$('#cfInput').focus(),60)}
+function askConfirm(o){if(!st.code&&!o.word)return;cfAct=o.run;$('#cfTitle').textContent=o.title;$('#cfText').innerHTML=o.text+(o.word===st.code?' <br>Kode sesi: <b>'+esc(st.code)+'</b>.':'');$('#cfWord').textContent=o.word;$('#cfOk').textContent=o.ok;$('#cfOk').dataset.word=o.word;$('#cfInput').value='';$('#cfOk').disabled=true;$('#cfErr').textContent='';$('#confirmGate').hidden=false;setTimeout(()=>$('#cfInput').focus(),60)}
 $('#cfInput').addEventListener('input',e=>{$('#cfOk').disabled=e.target.value.trim().toUpperCase()!==$('#cfOk').dataset.word});
 $('#cfCancel').addEventListener('click',()=>{$('#confirmGate').hidden=true;cfAct=null});
 $('#confirmForm').addEventListener('submit',e=>{e.preventDefault();if($('#cfOk').disabled)return;$('#confirmGate').hidden=true;const f=cfAct;cfAct=null;if(f)f()});
 $('#lockList').addEventListener('click',()=>{if(st.stage!==0)return;
-  askConfirm({title:'Kunci daftar peserta',word:'KUNCI',ok:'Kunci daftar',text:'Daftar <b>'+st.count+' peserta</b> tidak akan bisa ditambah, dikurangi, atau diganti lagi. Pastikan nama dan coffeeshop sudah benar.',
+  askConfirm({title:'Kunci daftar peserta',word:st.code,ok:'Kunci daftar',text:'Daftar <b>'+st.count+' peserta</b> tidak akan bisa ditambah, dikurangi, atau diganti lagi. Pastikan nama dan coffeeshop sudah benar.',
   run:()=>{st.stage=1;save();render();toast('Daftar peserta dikunci. Sekarang bisa diacak di depan peserta.')}})});
 $('#lockFinal').addEventListener('click',()=>{if(st.stage!==1||!st.draws)return;
-  askConfirm({title:'Kunci undian final',word:'FINAL',ok:'Kunci final',text:'Susunan heat dari <b>pengacakan ke-'+st.draws+'</b> menjadi final. Setelah ini tidak bisa diacak ulang, dan format bracket tidak bisa diubah.',
+  askConfirm({title:'Kunci undian final',word:st.code,ok:'Kunci final',text:'Susunan heat dari <b>pengacakan ke-'+st.draws+'</b> menjadi final. Setelah ini tidak bisa diacak ulang, dan format bracket tidak bisa diubah.',
   run:()=>{st.stage=2;save();render();toast('Undian final dikunci.')}})});
 function renderStage(){
   const s=st.stage||0;
@@ -666,6 +679,9 @@ function renderStage(){
   $('#stg1t').textContent=s===0?'Menunggu daftar dikunci.':s===1?('Tekan "Acak undian" berkali-kali; tiap pengacakan tampil di layar peserta. Sudah '+(st.draws||0)+' kali.'):('Selesai ('+(st.draws||0)+' kali pengacakan).');
   $('#stg2t').textContent=s===2?'Terkunci. Susunan heat tidak bisa diubah.':s===1?(st.draws?'Siap dikunci setelah susunan heat dipilih.':'Acak minimal sekali dulu.'):'Menunggu pengacakan.';
   $('#lockList').hidden=s!==0;$('#lockFinal').hidden=s!==1;$('#lockFinal').disabled=!st.draws;
+  $('#stg3t').textContent=s<2?'Tersedia setelah undian final dikunci.':st.dday?'Aktif: layar peserta menampilkan heat saat ini + preview berikutnya.':'Belum aktif: layar peserta menampilkan bagan lengkap.';
+  $('#stg3').classList.toggle('on',s===2);$('#ddayBtn').disabled=s<2;$('#ddayBtn').textContent=st.dday?'Kembali ke bagan lengkap':'Aktifkan mode hari H';
+  $('#viewMode').disabled=!st.dday;
   const L=s>=1;
   $('#names').readOnly=L;$('#count').disabled=L;
   document.querySelector('label[for="file"]').classList.toggle('is-locked',L);
@@ -673,6 +689,51 @@ function renderStage(){
   $('#showDraw').disabled=s===0;
   ['segMode','tchips','segRem','segSemi','chips','prows','addRow'].forEach(id=>{const el=$('#'+id);if(el)el.classList.toggle('is-locked',s>=2)});
 }
+
+
+/* ---------- mode hari H ---------- */
+$('#ddayBtn').addEventListener('click',()=>{if(st.stage<2)return;
+  const on=!st.dday;
+  askConfirm({title:on?'Aktifkan mode hari H':'Kembali ke bagan lengkap',word:on?'MULAI':'BAGAN',ok:on?'Aktifkan':'Kembali',
+    text:on?'Layar peserta berpindah ke <b>heat saat ini</b> dan preview peserta berikutnya. Bagan lengkap tetap ada di tab.':'Layar peserta kembali menampilkan bagan lengkap saja.',
+    run:()=>{st.dday=on;st.view=on?'live':'bracket';save();render();toast(on?'Mode hari H aktif':'Mode hari H dimatikan')}})});
+
+/* ---------- sesi (arsip) ---------- */
+const AKEY='tarung-tiga-stoa-archive';
+const aRead=()=>{try{return JSON.parse(lsGet(AKEY))||{}}catch(e){return{}}};
+const metaOf=s=>({code:s.code,created:s.created||0,archived:Date.now(),stage:s.stage||0,draws:s.draws||0,count:s.count});
+async function sessPost(action,qs,body){
+  const r=await fetch('/api/state?action='+action+(qs||''),{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Pin':pin},body:JSON.stringify(body||{})});
+  let j={};try{j=await r.json()}catch(e){}return{ok:r.ok,status:r.status,j};
+}
+async function sessList(){
+  if(remote.configured&&!remote.error&&pin){const r=await sessPost('list');return r.ok?r.j.sessions:[]}
+  return Object.values(aRead()).map(x=>x.meta).sort((a,b)=>b.archived-a.archived);
+}
+function freshSession(){const f=normalize({count:st.count,names:st.names.slice(),sample:false,judges:st.judges,showScores:st.showScores,mins:st.mins,stations:st.stations,beanPrep:st.beanPrep,beanRound:st.beanRound});f.code=newCode();f.created=Date.now();f.updated=Date.now();return f}
+async function adoptSession(ns){st=normalize(ns);lsSet(KEY,JSON.stringify(st));render();save();renderSessions()}
+async function startNewSession(){
+  const f=freshSession();
+  if(remote.configured&&!remote.error){const r=await sessPost('new','',{state:f});if(!r.ok){toast(r.j.error||'Gagal memulai sesi baru');return}await adoptSession(r.j.state)}
+  else{const a=aRead();a[st.code]={state:st,meta:metaOf(st)};try{lsSet(AKEY,JSON.stringify(a))}catch(e){}await adoptSession(f)}
+  toast('Sesi baru '+st.code+' dimulai. Sesi lama tersimpan.');
+}
+async function openSession(code){
+  if(remote.configured&&!remote.error){const r=await sessPost('restore','&code='+encodeURIComponent(code));if(!r.ok){toast(r.j.error||'Gagal membuka sesi');return}await adoptSession(r.j.state)}
+  else{const a=aRead(),t=a[code];if(!t)return;a[st.code]={state:st,meta:metaOf(st)};delete a[code];lsSet(AKEY,JSON.stringify(a));t.state.updated=Date.now();await adoptSession(t.state)}
+  toast('Sesi '+st.code+' dibuka. Sesi sebelumnya tersimpan.');
+}
+const stageName=n=>['daftar terbuka','daftar terkunci','undian final'][n]||'';
+async function renderSessions(){
+  $('#sessCode').textContent=st.code||'······';
+  let list=[];try{list=await sessList()}catch(e){}
+  $('#sessList').innerHTML=list.length?list.map(x=>'<li><span><b>'+esc(x.code)+'</b><small>'+stageName(x.stage)+' · '+x.count+' peserta'+(x.draws?' · '+x.draws+'x acak':'')+'</small></span><button class="btn" type="button" data-open="'+esc(x.code)+'">Buka</button></li>').join(''):'<li><small>Belum ada sesi lama.</small></li>';
+}
+$('#sessList').addEventListener('click',e=>{const b=e.target.closest('[data-open]');if(!b)return;const code=b.dataset.open;
+  askConfirm({title:'Buka sesi '+code,word:'BUKA',ok:'Buka sesi',text:'Sesi <b>'+esc(st.code)+'</b> yang sedang berjalan diarsipkan, lalu sesi <b>'+esc(code)+'</b> menjadi sesi aktif di layar peserta.',run:()=>openSession(code)})});
+$('#newSess').addEventListener('click',()=>{
+  askConfirm({title:'Mulai sesi baru',word:'BARU',ok:'Mulai sesi baru',text:'Sesi <b>'+esc(st.code)+'</b> diarsipkan (tidak dihapus). Sesi baru memakai daftar nama yang sama, belum terkunci, dan menjadi tampilan layar peserta.',run:startNewSession})});
+function ensureCode(){if(!st.code){st.code=newCode();st.created=st.created||Date.now();save()}renderSessions()}
 
 /* ---------- absen hari H (A4) ---------- */
 function absenHTML(){

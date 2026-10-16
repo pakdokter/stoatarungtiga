@@ -309,11 +309,30 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 @keyframes lock{from{background:var(--gold-fill)}}
 .hc.cur{border-color:var(--gold);box-shadow:0 0 0 3px rgba(242,193,78,.8),var(--shadow)}
 
+/* kontrol header, tab, sesi */
+.bar-r{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
+.sess{margin-left:6px;padding:2px 10px;border-radius:99px;border:1.5px solid #D6EBD7;font-size:12px;letter-spacing:.14em;color:#fff}
+.tabs{display:inline-flex;padding:3px;border-radius:99px;background:rgba(255,255,255,.16)}
+.tabs button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;font-weight:800;font-size:15px;padding:7px 16px;border-radius:99px;cursor:pointer}
+.tabs button[aria-selected="true"]{background:#fff;color:var(--green)}
+.tabs button:focus-visible{outline:3px solid var(--gold-fill);outline-offset:1px}
+/* preview heat berikutnya */
+.next{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:10px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.nx-h{font-weight:900;font-size:clamp(16px,1.6vw,22px);letter-spacing:.1em;text-transform:uppercase;color:var(--green)}
+.nx-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,260px),1fr));gap:10px;align-content:start}
+.nx{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.nx-k{font-weight:900;font-size:clamp(15px,1.4vw,19px);text-transform:uppercase;letter-spacing:.05em}
+.nx-k small{display:block;font-size:.72em;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:none}
+.nx ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.nx li b{display:block;font-weight:800;font-size:clamp(15px,1.4vw,20px);line-height:1.15}
+.nx li i{display:block;font-style:normal;font-weight:600;font-size:clamp(13px,1.1vw,16px);color:var(--muted)}
+.nx li.ph b{color:var(--muted);font-weight:600;font-style:italic}
+.nx.first{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,92,34,.16)}
 /* daftar peserta (tampilan awal) */
 .rules{align-self:center;padding:9px 16px;border-radius:99px;background:transparent;border:2px solid #D6EBD7;color:#fff;font-weight:800;font-size:15px;text-decoration:none;white-space:nowrap}
 .rules:hover,.rules:focus-visible{background:#fff;color:var(--green)}
-.roster{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
-.ro-sum{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0 6px;box-shadow:0 8px 8px -8px rgba(10,36,16,.25);display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;font-weight:700;font-size:clamp(16px,1.6vw,22px);color:var(--green)}
+.roster{display:flex;flex-direction:column;gap:12px}
+.ro-sum{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;font-weight:700;font-size:clamp(16px,1.6vw,22px);color:var(--green)}
 .ro-sum span{color:var(--muted);font-weight:600;font-size:.8em}
 .ro-grid{align-content:start;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:8px}
 .ro-it{display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:12px;background:var(--card);border:2px solid var(--line)}
@@ -322,7 +341,8 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .ro-s{display:block;font-weight:600;font-size:clamp(13.5px,1.2vw,17px);color:var(--muted);line-height:1.2}
 .ro-note{margin:0;font-size:clamp(13.5px,1.2vw,16px);font-weight:600;color:var(--muted)}
 .banner{padding:8px 14px;border-radius:12px;background:var(--gold-fill);color:var(--ink);font-weight:800;font-size:clamp(14px,1.3vw,18px)}
-@media (min-width:900px) and (min-height:600px){.screen.is-roster{grid-template-rows:auto minmax(0,1fr)}}
+/* tampilan daftar: seluruh halaman tergulir biasa, tidak di dalam kotak */
+@media (min-width:900px) and (min-height:600px){.screen.is-board{grid-template-rows:auto minmax(0,1fr)}body.m-roster{height:auto;overflow:auto}.screen.is-roster{height:auto;display:flex;flex-direction:column}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -330,15 +350,22 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 <div class="screen">
   <header class="bar">
     <div>
-      <span class="eyebrow"><span class="cups" aria-hidden="true"><i></i><i></i><i></i></span>Stoa Space · Selong, Lombok Timur</span>
+      <span class="eyebrow"><span class="cups" aria-hidden="true"><i></i><i></i><i></i></span>Stoa Space · Selong, Lombok Timur<span class="sess" id="sess" hidden></span></span>
       <h1>Stoa Fun <em>Brewing</em> Competition</h1>
     </div>
-    <a class="rules" href="/aturan">Aturan &amp; regulasi lomba</a>
-    <div class="now" id="now" hidden><span class="dot"></span><b>LIVE</b><span id="nowTxt"></span></div>
+    <div class="bar-r">
+      <a class="rules" id="rules" href="/aturan">Aturan &amp; regulasi lomba</a>
+      <div class="tabs" id="tabs" role="tablist" aria-label="Tampilan" hidden>
+        <button type="button" role="tab" data-v="live">Heat saat ini</button>
+        <button type="button" role="tab" data-v="bracket">Bagan lengkap</button>
+      </div>
+      <div class="now" id="now" hidden><span class="dot"></span><b>LIVE</b><span id="nowTxt"></span></div>
+    </div>
   </header>
   <ol class="steps" id="steps" aria-label="Babak"></ol>
   <section class="spot" id="spot" aria-live="polite"></section>
   <section class="roster" id="roster" hidden aria-label="Daftar peserta"></section>
+  <section class="next" id="next" hidden aria-label="Heat berikutnya"></section>
   <div class="scroller" id="scroller"><div class="bracket" id="bracket"></div></div>
 </div>
 <div class="champ-ov" id="champ" hidden role="dialog" aria-label="Juara Stoa Fun Brewing Competition"></div>
@@ -362,7 +389,7 @@ let fitT,st=null,lastUpd=-1,rendered=false,prevSig=new Map(),lastLive='',lastRou
 const E=engine(()=>st);
 
 /* ---------- data masuk ---------- */
-function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);update();
+function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);const bk=st.code+'|'+st.dday+'|'+st.view;if(bk!==baseKey){baseKey=bk;viewTab=null}update();
   /* tayangan undian hanya diputar bila admin memicunya saat halaman ini terbuka */
   const sid=st.drawShow?st.drawShow.id:0;if(lastShow===null)lastShow=sid;else if(sid&&sid!==lastShow){lastShow=sid;playDraw()}}
 /* jenis perubahan menentukan animasi: 'round' = zoom seluruh layar, 'heat' = zoom kartu sorotan */
@@ -383,6 +410,26 @@ function tagOf(rd,s){return s==='win'?'Lolos':s==='ll'?(rd.a===0?'Skor terbaik':
 const roundDone=rd=>rd.heats.every((h,hi)=>{const s=E.heatState(rd,hi);return s==='done'||s==='bye'});
 
 /* ---------- render ---------- */
+/* mode tampilan: sebelum mode hari H selalu bagan lengkap; sesudahnya heat saat ini dengan tab ke bagan */
+let viewTab=null,baseKey='';
+function boardMode(){if(!st||st.stage<2||!st.dday)return true;return(viewTab||st.view)!=='live'}
+function chrome(){
+  const se=$('#sess');se.hidden=!st.code;se.textContent='Sesi '+st.code;
+  $('#rules').hidden=st.stage>=2;
+  const tabs=$('#tabs'),on=st.stage>=2&&st.dday;tabs.hidden=!on;
+  if(on){const cur=viewTab||st.view;tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.v===cur)))}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('#tabs button');if(!b||!st)return;viewTab=b.dataset.v;lastRound='';render()});
+function renderNext(rs,lv,finished){
+  const el=$('#next');
+  if(finished){el.innerHTML='';return}
+  const items=[];
+  outer:for(let ri=lv.ri;ri<rs.length;ri++){const rd=rs[ri];for(let hi=(ri===lv.ri?lv.hi+1:0);hi<rd.heats.length;hi++){const t=E.heatState(rd,hi);if(t==='bye'||t==='done')continue;items.push({rd,hi});if(items.length>=6)break outer}}
+  if(!items.length){el.innerHTML='<div class="nx-h">Berikutnya</div><p class="ro-note">Tidak ada heat berikutnya.</p>';return}
+  el.innerHTML='<div class="nx-h">Berikutnya</div><div class="nx-grid">'+items.map(({rd,hi},i)=>{
+    const title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1),sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
+    return '<article class="nx'+(i===0?' first':'')+'"><span class="nx-k">'+title+'<small>'+esc(sub)+'</small></span><ul>'+rd.heats[hi].map(m=>m.id!=null?'<li><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></li>':'<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>').join('')+'</ul></article>'}).join('')+'</div>';
+}
 function renderRoster(){
   const ids=[...Array(st.count).keys()].map(id=>({id,n:E.nameOf(id),s:E.shopOf(id)})).sort((a,b)=>a.n.localeCompare(b.n,'id',{sensitivity:'base'})||a.s.localeCompare(b.s,'id',{sensitivity:'base'}));
   const shops=new Set(ids.map(p=>p.s.toLowerCase()).filter(Boolean)).size;
@@ -392,9 +439,12 @@ function renderRoster(){
 }
 function render(){
   if(!st){rendered=true;return}
+  chrome();
   const roster=st.stage<2&&!st.draws;
   document.body.classList.toggle('m-roster',roster);$('.screen').classList.toggle('is-roster',roster);
-  $('#roster').hidden=!roster;$('#scroller').hidden=roster;
+  const board=boardMode();
+  $('#roster').hidden=!roster;$('#scroller').hidden=roster||!board;$('#steps').hidden=$('#spot').hidden=$('#next').hidden=roster||board||false;if(roster)$('#next').hidden=true;
+  $('.screen').classList.toggle('is-board',!roster&&board);
   if(roster){
     $('#steps').innerHTML='';$('#spot').innerHTML='';renderRoster();
     const n=$('#now');n.hidden=false;n.classList.toggle('done',st.stage>=1);n.querySelector('b').textContent=st.stage>=1?'TERKUNCI':'PESERTA';
@@ -404,13 +454,12 @@ function render(){
   const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim);
   const fin=rs[rs.length-1],finished=roundDone(fin),lr=rs[lv.ri];
   /* mode tampilan: final dominan, fokus saat 9 besar ke bawah */
-  const board=st.view!=='live';
   const mode=board?'':finished||lr.sp.kind==='final'?'m-final':lr.n<=9?'m-focus':'';
   document.body.classList.toggle('m-board',board);
   document.body.classList.toggle('m-final',mode==='m-final');document.body.classList.toggle('m-focus',mode==='m-focus');document.body.classList.toggle('finished',finished);
   lastRound=finished?'end':lr.sp.short;
-  if(board){renderNow(rs,lv,true);$('#steps').innerHTML='';$('#spot').innerHTML='';renderBoard(rs)}
-  else{renderNow(rs,lv,finished);renderSteps(rs,lv,finished);renderSpot(rs,lv,finished);renderBracket(rs,lv,finished)}
+  if(board){renderNow(rs,lv,true);$('#steps').innerHTML='';$('#spot').innerHTML='';$('#next').innerHTML='';renderBoard(rs)}
+  else{renderNow(rs,lv,finished);renderSteps(rs,lv,finished);renderSpot(rs,lv,finished);renderNext(rs,lv,finished)}
   fit();clearTimeout(fitT);fitT=setTimeout(()=>{fit();scrollToLive(true)},780);if(rendered)runFx();else snapshotSig();
   const key=finished?'end':lv.ri+'-'+lv.hi;
   if(key!==lastLive){const first=!lastLive;lastLive=key;requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToLive(first)))}
@@ -419,11 +468,10 @@ function render(){
 }
 function renderNow(rs,lv,finished){
   const n=$('#now');n.hidden=false;n.classList.toggle('done',finished);
-  const board=st.view!=='live';
-  const prov=st.stage<2;
-  n.querySelector('b').textContent=board?(prov?'SEMENTARA':'UNDIAN'):finished?'SELESAI':'LIVE';
+  const board=boardMode(),prov=st.stage<2;
+  n.querySelector('b').textContent=board?(prov?'SEMENTARA':st.dday?'HARI H':'UNDIAN'):finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
-  if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.draws?'Undian final · pengacakan ke-'+st.draws:'Bagan pertandingan';return}
+  if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.dday?'Bagan lengkap':'Undian final · pengacakan ke-'+st.draws;return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){

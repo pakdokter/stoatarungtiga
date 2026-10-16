@@ -26,13 +26,20 @@ di perangkat yang sama dengan admin (misalnya laptop panitia + jendela kedua di 
 
 ## Alur hari undian (penguncian)
 
-1. **Daftar peserta**: layar peserta (`/`) menampilkan semua nama dan coffeeshop. Admin mengedit daftar di `/admin`.
-2. **Kunci daftar peserta** (ketik `KUNCI`): nama tidak bisa ditambah, dikurangi, atau diganti lagi.
-3. **Acak undian**: bisa ditekan berkali-kali. Tiap pengacakan diputar langsung di layar peserta dan bagan sementara tampil dengan label "belum final".
-4. **Kunci undian final** (ketik `FINAL`): susunan heat dan format bracket tidak bisa diubah. Skor tetap bisa diisi.
+Setiap sesi punya **kode sesi** (6 karakter, tampil di layar peserta dan di admin). Kode ini yang diketik untuk mengunci.
 
-Penguncian tidak bisa dibuka dari admin dan dijaga di server (`api/state.js` menolak perubahan dengan status 409).
-Darurat: hapus key `tarung-tiga-stoa:state` di Upstash Redis untuk mengulang dari awal.
+1. **Daftar peserta**: layar peserta (`/`) menampilkan semua nama dan coffeeshop, plus tautan aturan (`/aturan`).
+2. **Kunci daftar peserta** (ketik kode sesi): nama tidak bisa ditambah, dikurangi, atau diganti lagi.
+3. **Acak undian**: bisa berkali-kali. Tiap pengacakan diputar di layar peserta; bagan sementara tampil berlabel "belum final".
+4. **Kunci undian final** (ketik kode sesi): susunan heat dan format bracket terkunci. Tautan aturan hilang dari halaman utama. Halaman pertama = bagan lengkap, tidak berganti.
+5. **Mode hari H** (admin, ketik `MULAI`): halaman pertama = heat saat ini + preview heat berikutnya, dengan tab ke **Bagan lengkap**. Bisa dikembalikan ke bagan lengkap.
+
+Penguncian dijaga di server (`api/state.js` menolak perubahan dengan status 409) dan tidak bisa dibuka dari admin.
+
+## Sesi
+
+Admin > panel **Sesi**: **Mulai sesi baru** mengarsipkan sesi yang berjalan (tidak dihapus) dan membuat sesi baru dengan daftar nama yang sama. Sesi lama bisa **Dibuka** lagi; sesi yang sedang berjalan otomatis diarsipkan.
+Arsip disimpan di Upstash Redis (`tarung-tiga-stoa:sessions` / `:meta`). Darurat total: hapus key `tarung-tiga-stoa:state` untuk mengosongkan sesi aktif.
 
 ## Mode layar peserta
 
