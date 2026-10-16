@@ -466,6 +466,7 @@ async function initSync(){
 }
 
 /* ---------- render ---------- */
+const finishAt=m=>{const t=15*60+30+m;return String(Math.floor(t/60)%24).padStart(2,'0')+'.'+String(t%60).padStart(2,'0')};
 function fmtDur(m){const h=Math.floor(m/60),mm=m%60;return h?h+' j '+mm+' m':mm+' m'}
 function renderSetup(sim){
   renderStage();
@@ -583,13 +584,13 @@ function renderBoard(sim){
   const BP=Math.max(0,+st.beanPrep||0),BR=Math.max(0,+st.beanRound||0),beanG=sim.N*BP+brews*BR,
     beanTxt=sim.N+'×'+BP+' g persiapan + '+brews+' seduhan×'+BR+' g';
   const aEl=document.activeElement,keepStat=aEl&&(aEl.id==='mins'||aEl.id==='stations'||aEl.id==='beanPrep'||aEl.id==='beanRound');
-  if(!keepStat)$('#stats').innerHTML='<div><b>'+rs.length+'</b>babak</div><div><b>'+heatsN+'</b>heat bertanding</div><div><b>≈ '+fmtDur(mins)+'</b>estimasi durasi</div><div title="'+beanTxt+'"><b>'+beanG.toLocaleString('id-ID')+' g</b>total biji kopi</div>'+
+  if(!keepStat)$('#stats').innerHTML='<div><b>'+rs.length+'</b>babak</div><div><b>'+heatsN+'</b>heat bertanding</div><div title="Heat pertama 15.30; tiap heat 7 menit seduh + 1 menit penjurian + 1 menit transisi"><b>≈ '+fmtDur(mins)+'</b>estimasi durasi, selesai ±'+finishAt(mins)+'</div><div title="'+beanTxt+'"><b>'+beanG.toLocaleString('id-ID')+' g</b>total biji kopi</div>'+
     '<label class="stat-in" for="mins"><input id="mins" type="number" min="1" value="'+M+'"> menit/heat</label>'+
     '<label class="stat-in" for="stations"><input id="stations" type="number" min="1" value="'+S+'"> stasiun brew</label>'+
     '<label class="stat-in" for="beanPrep"><input id="beanPrep" type="number" min="0" value="'+BP+'"> g persiapan/peserta</label>'+
     '<label class="stat-in" for="beanRound"><input id="beanRound" type="number" min="0" value="'+BR+'"> g/babak/peserta</label>'+
     '<p class="hint" id="beanHint" style="flex-basis:100%;margin:0">Biji kopi: '+beanTxt+' = '+beanG.toLocaleString('id-ID')+' g</p>';
-  else{const b=$('#stats').querySelectorAll('b');b[1].textContent=heatsN;b[2].textContent='≈ '+fmtDur(mins);b[3].textContent=beanG.toLocaleString('id-ID')+' g';$('#beanHint').textContent='Biji kopi: '+beanTxt+' = '+beanG.toLocaleString('id-ID')+' g'}
+  else{const b=$('#stats').querySelectorAll('b');b[1].textContent=heatsN;b[2].textContent='≈ '+fmtDur(mins);b[2].parentNode.lastChild.textContent='estimasi durasi, selesai ±'+finishAt(mins);b[3].textContent=beanG.toLocaleString('id-ID')+' g';$('#beanHint').textContent='Biji kopi: '+beanTxt+' = '+beanG.toLocaleString('id-ID')+' g'}
   const fin=rs[rs.length-1],fev=fin.evals[0];
   if(fev.ready&&fev.determined>0){
     const rest=fev.order.slice(1,fev.determined).map((id,i)=>'Juara '+(i+2)+': '+esc(fullOf(id))).join('<br>');const cs=shopOf(fev.order[0]);

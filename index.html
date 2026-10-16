@@ -338,7 +338,18 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .nx li b{display:block;font-weight:800;font-size:clamp(15px,1.4vw,20px);line-height:1.15}
 .nx li i{display:block;font-style:normal;font-weight:600;font-size:clamp(13px,1.1vw,16px);color:var(--muted)}
 .nx li.ph b{color:var(--muted);font-weight:600;font-style:italic}
-.nx.first{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,92,34,.16)}
+.nx-k{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
+.nx-k small{flex-basis:100%}
+.nx-t{font-size:.62em;font-weight:900;letter-spacing:.1em;padding:2px 9px;border-radius:99px;background:#E4EBE2;color:var(--muted)}
+.nx-t.live{background:var(--live);color:#fff}.nx-t.nxt{background:var(--green);color:#fff}
+.nx.live{border-color:var(--live);box-shadow:0 0 0 3px rgba(209,42,30,.18)}
+.nx.next{border-color:var(--green);box-shadow:0 0 0 3px rgba(31,92,34,.16)}
+/* heat selesai: warna abu-krem dan pudar */
+.nx.done{background:#EFEDE4;border-color:#D3CFBF;opacity:.58;filter:saturate(.35)}
+.nx.done li.w b::before{content:"\2713  ";color:var(--green)}
+/* heat belum aktif: buram sampai digulir ke area atas */
+.nx.later{filter:blur(6px);opacity:.75;transition:filter .45s var(--ease),opacity .45s var(--ease)}
+.nx.later.vis{filter:none;opacity:1}
 /* daftar peserta (tampilan awal) */
 .rules{align-self:center;padding:9px 16px;border-radius:99px;background:transparent;border:2px solid #D6EBD7;color:#fff;font-weight:800;font-size:15px;text-decoration:none;white-space:nowrap}
 .rules:hover,.rules:focus-visible{background:#fff;color:var(--green)}
@@ -454,15 +465,27 @@ function renderWinner(rs,lv){
    +'<div class="win-f">Lanjut ke heat berikutnya dalam <span class="hold-n">'+n+'</span> dtk</div>';
   ov.hidden=false;
 }
+let nextKey='',nextIO=null;
 function renderNext(rs,lv,finished){
   const el=$('#next');
-  if(finished){el.innerHTML='';return}
   const items=[];
-  outer:for(let ri=lv.ri;ri<rs.length;ri++){const rd=rs[ri];for(let hi=(ri===lv.ri?lv.hi+1:0);hi<rd.heats.length;hi++){const t=E.heatState(rd,hi);if(t==='bye'||t==='done')continue;items.push({rd,hi});if(items.length>=6)break outer}}
-  if(!items.length){el.innerHTML='<div class="nx-h">Berikutnya</div><p class="ro-note">Tidak ada heat berikutnya.</p>';return}
-  el.innerHTML='<div class="nx-h">Berikutnya</div><div class="nx-grid">'+items.map(({rd,hi},i)=>{
-    const title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1),sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
-    return '<article class="nx'+(i===0?' first':'')+'"><span class="nx-k">'+title+'<small>'+esc(sub)+'</small></span><ul>'+rd.heats[hi].map(m=>m.id!=null?'<li><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></li>':'<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>').join('')+'</ul></article>'}).join('')+'</div>';
+  rs.forEach((rd,ri)=>rd.heats.forEach((h,hi)=>{const t=E.heatState(rd,hi);if(t==='bye')return;items.push({rd,hi,t,live:!finished&&ri===lv.ri&&hi===lv.hi})}));
+  let nextI=-1;const li=items.findIndex(x=>x.live);
+  for(let i=Math.max(0,li+1);i<items.length;i++)if(items[i].t!=='done'){nextI=i;break}
+  const card=(x,i)=>{
+    const {rd,hi}=x,title=rd.sp.kind==='final'?'Final':'Heat '+(hi+1),sub=rd.sp.kind==='final'?'Perebutan Juara 1, 2, 3':rd.sp.label+' · '+(hi+1)+' dari '+rd.H+' heat';
+    const cls=x.live?'live':x.t==='done'?'done':i===nextI?'next':'later',tag=x.live?'<b class="nx-t live">Sedang bertanding</b>':x.t==='done'?'<b class="nx-t">Selesai</b>':i===nextI?'<b class="nx-t nxt">Berikutnya</b>':'';
+    const mem=rd.heats[hi].map(m=>m.id!=null?'<li'+(x.t==='done'&&rd.status.get(m.id)==='win'?' class="w"':'')+'><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></li>':'<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>').join('');
+    return '<article class="nx '+cls+'" data-k="'+esc(rd.sp.short)+'-'+hi+'"><span class="nx-k">'+title+tag+'<small>'+esc(sub)+'</small></span><ul>'+mem+'</ul></article>';
+  };
+  el.innerHTML='<div class="nx-h">Semua heat</div><div class="nx-grid">'+items.map(card).join('')+'</div>';
+  /* heat yang belum aktif diburamkan; jelas kembali begitu digulir ke area atas */
+  if(nextIO)nextIO.disconnect();
+  if('IntersectionObserver' in window){nextIO=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('vis',e.isIntersecting)),{root:desk()?el:null,rootMargin:'0px 0px -55% 0px'});el.querySelectorAll('.nx.later').forEach(n=>nextIO.observe(n))}
+  else el.querySelectorAll('.nx.later').forEach(n=>n.classList.add('vis'));
+  /* gulir otomatis ke heat yang sedang/akan bertanding bila berubah */
+  const key=(li>=0?items[li].rd.sp.short+'-'+items[li].hi:'end');
+  if(key!==nextKey){nextKey=key;const t=el.querySelector('.nx.live')||el.querySelector('.nx.next');if(t&&desk())requestAnimationFrame(()=>{el.scrollTop=Math.max(0,t.offsetTop-el.offsetTop-8)})}
 }
 function renderRoster(){
   const ids=[...Array(st.count).keys()].map(id=>({id,n:E.nameOf(id),s:E.shopOf(id)})).sort((a,b)=>a.n.localeCompare(b.n,'id',{sensitivity:'base'})||a.s.localeCompare(b.s,'id',{sensitivity:'base'}));

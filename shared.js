@@ -10,7 +10,7 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, dday: false, fin: null, finAck: 0, doneSet: null, code: '', created: 0, updated: 0 };
+    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 9, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, dday: false, fin: null, finAck: 0, doneSet: null, code: '', created: 0, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
