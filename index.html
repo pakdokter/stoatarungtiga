@@ -84,12 +84,25 @@ h1 em{font-style:normal;color:var(--gold-fill)}
 .pc-sc{font-size:38px;font-weight:900;line-height:1}
 .pc-sc small{font-size:15px;font-weight:700;color:inherit;opacity:.75;margin-left:4px}
 .pc-tag{font-size:13px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;border-radius:6px;background:var(--tint);color:var(--green)}
+.a0{--ac:#0B6E7F;--at:#E4F2F5;--ad:#075060}
+.a1{--ac:#B26A00;--at:#FCEFD9;--ad:#7A4800}
+.a2{--ac:#7A3B8F;--at:#F2E7F6;--ad:#592A69}
+/* ikon cangkir untuk nama coffeeshop */
+.pc-shop::before,.sl-s.cs::before,.nx li i::before{content:"";flex:none;display:inline-block;width:1.05em;height:1.05em;margin-right:5px;vertical-align:-.15em;background:currentColor;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 7h14v6a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V7zm14 1.5h1.5a2.5 2.5 0 0 1 0 5H17v-1.5h1.5a1 1 0 0 0 0-2H17V8.5zM6 20h10v1.5H6z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 7h14v6a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5V7zm14 1.5h1.5a2.5 2.5 0 0 1 0 5H17v-1.5h1.5a1 1 0 0 0 0-2H17V8.5zM6 20h10v1.5H6z'/%3E%3C/svg%3E") center/contain no-repeat}
+/* kartu peserta: warna aksen per posisi, nama dan coffeeshop dipisah jelas */
+.pc.a0,.pc.a1,.pc.a2{background:var(--at);border-color:var(--ac)}
+.pc.a0 .pc-k,.pc.a1 .pc-k,.pc.a2 .pc-k{align-self:flex-start;background:var(--ac);color:#fff;padding:3px 11px;border-radius:99px}
+.pc.a0 h3,.pc.a1 h3,.pc.a2 h3{margin-top:8px;padding-bottom:8px;border-bottom:2px solid color-mix(in srgb,var(--ac) 28%,transparent)}
+.pc .pc-shop{margin-top:8px;align-self:flex-start;display:inline-flex;align-items:center;padding:4px 13px 4px 10px;border-radius:99px;background:#fff;border:1.5px solid var(--ac,var(--line2));color:var(--ad,var(--muted));font-weight:700;font-size:16px}
 .pc.win{background:var(--green);border-color:var(--green);color:var(--on-green)}
 .pc.win .pc-k,.pc.win p{color:#D6EBD7}
 .pc.win .pc-tag{background:#FFFFFF;color:var(--green)}
+.pc.win .pc-k{background:rgba(255,255,255,.2);color:#fff}.pc.win h3{border-bottom-color:rgba(255,255,255,.3)}
+.pc.win .pc-shop{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.55);color:#fff}
 .pc.ll{background:var(--gold-fill);border-color:var(--gold)}
 .pc.ll .pc-k,.pc.ll p{color:#4A3500}
 .pc.ll .pc-tag{background:var(--ink);color:#FFFFFF}
+.pc.ll .pc-shop{background:rgba(255,255,255,.55);border-color:#4A3500;color:#4A3500}
 .pc.out{opacity:.45;filter:grayscale(.6)}
 .pc.ph{border-style:dashed;border-color:var(--line2);background:transparent;box-shadow:none}
 .pc.ph h3{color:var(--muted);font-weight:700;font-size:21px}
@@ -152,6 +165,8 @@ h1 em{font-style:normal;color:var(--gold-fill)}
 .sl-s{font-size:13px;font-weight:600;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sl-sc{font-size:19px;font-weight:900}
 .sl-ic{flex:none;width:22px;height:22px;display:grid;place-items:center;border-radius:50%;font-size:12px;font-weight:900}
+.sl.a0,.sl.a1,.sl.a2{background:var(--at);border-left:5px solid var(--ac)}
+.sl.a0 .sl-s,.sl.a1 .sl-s,.sl.a2 .sl-s{color:var(--ad);font-weight:700}
 .sl.win{background:var(--green);color:#FFFFFF}.sl.win .sl-s{color:#D6EBD7}.sl.win .sl-ic{background:#FFFFFF;color:var(--green)}
 .sl.ll{background:var(--gold-fill)}.sl.ll .sl-s{color:#4A3500}.sl.ll .sl-ic{background:var(--ink);color:#FFFFFF}
 .sl.p1{background:var(--gold-fill)}.sl.p1 .sl-s{color:#4A3500}.sl.p1 .sl-ic{background:var(--ink);color:var(--gold-fill)}
@@ -351,7 +366,7 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .nx-k small{display:block;font-size:.72em;font-weight:700;letter-spacing:.04em;color:var(--muted);text-transform:none}
 .nx ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .nx li b{display:block;font-weight:800;font-size:clamp(15px,1.4vw,20px);line-height:1.15}
-.nx li i{display:block;font-style:normal;font-weight:600;font-size:clamp(13px,1.1vw,16px);color:var(--muted)}
+.nx li i{display:inline-flex;align-items:center;margin-top:4px;padding:1px 10px 1px 8px;border-radius:99px;background:#fff;border:1px solid color-mix(in srgb,var(--ac,#1F5C22) 45%,transparent);font-style:normal;font-weight:700;font-size:clamp(13px,1.1vw,16px);color:var(--ad,var(--muted))}
 .nx li.ph b{color:var(--muted);font-weight:600;font-style:italic}
 .nx-k{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 10px}
 .nx-k small{flex-basis:100%}
@@ -367,9 +382,10 @@ body.m-board .sl-n,body.m-board .sl-s,.dr-board .sl-n,.dr-board .sl-s{white-spac
 .nx.done .nx-k{opacity:.6}
 .nx li{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:9px;transition:background-color .5s var(--ease),opacity .5s var(--ease)}
 .nx li>span{min-width:0}
+.nx li.a0,.nx li.a1,.nx li.a2{background:var(--at);border-left:5px solid var(--ac);padding:7px 10px}
 .nx.done li.l{opacity:.45}
-.nx.done li.w{background:#1F5C22;color:#fff;padding:6px 10px;margin:0 -4px}
-.nx.done li.w i{color:#D6EBD7}
+.nx.done li.w{background:#1F5C22;color:#fff;border-left-color:var(--gold-fill)}
+.nx.done li.w i{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.5);color:#fff}
 .nx-w{flex:none;font-style:normal;font-weight:900;font-size:12px;letter-spacing:.12em;padding:3px 9px;border-radius:99px;background:var(--gold-fill);color:var(--ink)}
 .nx-sc{flex:none;font-style:normal;font-weight:800;font-size:14px;color:var(--muted)}
 .nx.done li.w .nx-sc{color:#fff}
@@ -522,9 +538,9 @@ function renderNext(rs,lv,finished){
     const base=x.live?'live':x.t==='done'?'done':i===nextI?'next':'later';
     const tag=x.live?'<b class="nx-t live">Sedang bertanding</b>':x.t==='done'?'<b class="nx-t">Selesai</b>':i===nextI?'<b class="nx-t nxt">Berikutnya</b>':'';
     const done=x.t==='done';
-    const mem=rd.heats[hi].map(m=>{if(m.id==null)return '<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>';
+    const mem=rd.heats[hi].map((m,mi)=>{if(m.id==null)return '<li class="ph"><b>Menunggu '+esc(m.ph)+'</b></li>';
       const w=done&&rd.status.get(m.id)==='win',sc=done?scoreOf(rd.sp.short,m.id):'';
-      return '<li'+(done?(w?' class="w"':' class="l"'):'')+'><span><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></span>'+(w?'<em class="nx-w">LOLOS</em>':sc?'<em class="nx-sc">'+esc(sc)+'</em>':'')+'</li>'}).join('');
+      return '<li class="a'+(mi%3)+(done?(w?' w':' l'):'')+'"><span><b>'+esc(E.nameOf(m.id))+'</b><i>'+esc(E.shopOf(m.id)||'\u00a0')+'</i></span>'+(w?'<em class="nx-w">LOLOS</em>':sc?'<em class="nx-sc">'+esc(sc)+'</em>':'')+'</li>'}).join('');
     return {k:x.k,base,html:'<span class="nx-k">'+title+tag+'<small>'+esc(sub)+'</small></span><ul>'+mem+'</ul>'};
   };
   const vs=items.map(view);
@@ -548,7 +564,7 @@ function renderNext(rs,lv,finished){
   }else grid.querySelectorAll('.nx.later').forEach(n=>n.classList.add('vis'));
   /* gulir halus ke heat yang sedang/akan bertanding bila berubah */
   const key=(li>=0?items[li].k:'end');
-  if(key!==nextKey){nextKey=key;const t=grid.querySelector('.nx.live')||grid.querySelector('.nx.next');if(t&&desk())requestAnimationFrame(()=>el.scrollTo({top:Math.max(0,t.offsetTop-el.offsetTop-8),behavior:reduce?'auto':'smooth'}))}
+  if(key!==nextKey){nextKey=key;const t=grid.querySelector('.nx.live')||grid.querySelector('.nx.next');if(t&&desk())requestAnimationFrame(()=>el.scrollTo({top:Math.max(0,t.offsetTop-el.offsetTop-12-((el.querySelector('.nx-h')||{}).offsetHeight||0)),behavior:reduce?'auto':'smooth'}))}
 }
 function renderRoster(){
   const ids=[...Array(st.count).keys()].map(id=>({id,n:E.nameOf(id),s:E.shopOf(id)})).sort((a,b)=>a.n.localeCompare(b.n,'id',{sensitivity:'base'})||a.s.localeCompare(b.s,'id',{sensitivity:'base'}));
@@ -608,7 +624,7 @@ function spotCard(rd,m,i,show){
   if(m.id==null)return '<article class="pc ph" data-pos="'+pos+'" data-sig="ph~'+esc(m.ph)+'"'+vt+'><span class="pc-k">Stasiun '+(i+1)+'</span><h3>Menunggu</h3><p>'+esc(m.ph)+'</p></article>';
   const id=m.id,s=rd.status.get(id)||'',sc=show?scoreOf(rd.sp.short,id):'',t=tagOf(rd,s);
   const cls=s==='win'||s==='p1'?'win':s==='ll'?'ll':s==='out'?'out':'';
-  return '<article class="pc '+cls+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"'+vt+'>'+(s==='win'||s==='p1'?'<span class="crown-ic">'+CROWN+'</span>':'')+
+  return '<article class="pc a'+(i%3)+' '+cls+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"'+vt+'>'+(s==='win'||s==='p1'?'<span class="crown-ic">'+CROWN+'</span>':'')+
     '<span class="pc-k">Stasiun '+(i+1)+'</span><h3>'+esc(E.nameOf(id))+'</h3><p>'+esc(E.shopOf(id)||' ')+'</p>'+
     '<div class="pc-f"><b class="pc-sc">'+esc(sc)+(sc&&st.judges?'<small>suara</small>':'')+'</b>'+(t?'<span class="pc-tag">'+t+'</span>':'')+'</div></article>';
 }
@@ -643,7 +659,7 @@ function hcard(rd,hi,live,mask,ri,lab){
     if(m.id==null)return '<li class="sl ph" data-pos="'+pos+'" data-sig="ph~'+esc(m.ph)+'"><span class="sl-t"><span class="sl-n">'+esc(m.ph)+'</span></span></li>';
     const id=m.id,s=hm.length===1?'win':(rd.status.get(id)||''),sc=show&&hm.length>1?scoreOf(key,id):'';
     const ic=s==='win'?'✓':s==='ll'?'LL':s[0]==='p'?s[1]:'';
-    return '<li class="sl '+s+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"><span class="sl-t"><span class="sl-n">'+esc(E.nameOf(id))+'</span><span class="sl-s">'+esc(E.shopOf(id)||' ')+'</span></span>'+
+    return '<li class="sl a'+(i%3)+' '+s+'" data-pos="'+pos+'" data-sig="'+id+'~'+s+'~'+esc(sc)+'"><span class="sl-t"><span class="sl-n">'+esc(E.nameOf(id))+'</span><span class="sl-s cs">'+esc(E.shopOf(id)||' ')+'</span></span>'+
       (sc?'<b class="sl-sc">'+esc(sc)+'</b>':'')+(ic?'<span class="sl-ic">'+ic+'</span>':'')+'</li>';
   }).join('');
   const chip=live?'<span class="chip live">LIVE</span>':state==='done'?'<span class="chip done">SELESAI</span>':state==='bye'?'<span class="chip bye">BYE</span>':'';
