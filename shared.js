@@ -10,7 +10,7 @@
   const shuffleArr = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 
   function defState() {
-    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, dday: false, code: '', created: 0, updated: 0 };
+    return { count: SAMPLE.length, names: SAMPLE.slice(), sample: false, final: 3, semi: 3, rem: 'bye', rows: [], order: DEF_ORDER.slice(), res: {}, mins: 12, stations: 1, beanPrep: 50, beanRound: 20, live: null, showScores: 'done', judges: 3, llPick: {}, llDraw: {}, mode: 'playin', target: 0, drawShow: null, view: 'bracket', stage: 0, draws: 0, dday: false, fin: null, finAck: 0, doneSet: null, code: '', created: 0, updated: 0 };
   }
   function normalize(src) {
     const o = Object.assign(defState(), src && typeof src === 'object' ? src : {});
@@ -36,6 +36,10 @@
     o.dday = o.stage >= 2 && o.dday === true;
     o.code = typeof o.code === 'string' ? o.code.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20).toUpperCase() : '';
     o.created = Math.max(0, +o.created || 0);
+    /* hasil heat selesai: layar menahan heat itu 10 detik atau sampai admin menekan Lanjut */
+    o.fin = o.fin && typeof o.fin.k === 'string' && o.fin.h >= 0 && +o.fin.id > 0 ? { k: o.fin.k, h: +o.fin.h, id: +o.fin.id } : null;
+    o.finAck = Math.max(0, +o.finAck || 0);
+    o.doneSet = Array.isArray(o.doneSet) ? o.doneSet.map(String) : null;
     o.drawShow = o.drawShow && +o.drawShow.id > 0 ? { id: +o.drawShow.id } : null;
     const N = o.count;
     if (!Array.isArray(o.order) || o.order.length !== N || new Set(o.order).size !== N || o.order.some(x => !(x >= 0 && x < N))) o.order = [...Array(N).keys()];

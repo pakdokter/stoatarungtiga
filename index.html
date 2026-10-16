@@ -388,13 +388,22 @@ const desk=()=>matchMedia('(min-width: 900px) and (min-height: 600px)').matches;
 const CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 let fitT,st=null,lastUpd=-1,rendered=false,prevSig=new Map(),lastLive='',lastRound='',champKey='',champT=null;
 const E=engine(()=>st);
+/* hasil heat selesai ditahan 10 detik, atau sampai admin menekan Lanjut */
+let hold=null,holdT=null,holdI=null,lastFin=null;
+function curLive(sim){return hold?E.liveOf(sim,{k:hold.k,h:hold.h}):E.liveOf(sim)}
+function endHold(){if(!hold)return;hold=null;clearTimeout(holdT);clearInterval(holdI);lastRound='';update()}
+function startHold(f){hold={k:f.k,h:f.h,id:f.id,until:Date.now()+10000};clearTimeout(holdT);clearInterval(holdI);holdT=setTimeout(endHold,10000);holdI=setInterval(()=>{const el=document.getElementById('hold');if(el)el.textContent=Math.max(0,Math.ceil((hold.until-Date.now())/1000))},500)}
 
 /* ---------- data masuk ---------- */
-function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);const bk=st.code+'|'+st.dday+'|'+st.view;if(bk!==baseKey){baseKey=bk;viewTab=null}update();
+function apply(s){if(!s||typeof s!=='object'||typeof s.count!=='number')return;const u=+s.updated||0;if(u&&u<=lastUpd)return;lastUpd=u;st=normalize(s);const bk=st.code+'|'+st.dday+'|'+st.view;if(bk!==baseKey){baseKey=bk;viewTab=null}
+  /* hasil heat baru: tahan 10 detik (atau sampai admin menekan Lanjut) sebelum pindah ke heat berikutnya */
+  const fid=st.fin?st.fin.id:0;if(lastFin===null)lastFin=fid;else if(fid&&fid!==lastFin){lastFin=fid;if(st.stage>=2&&st.dday&&st.finAck!==fid)startHold(st.fin)}
+  if(hold&&(st.finAck===hold.id||!st.dday)){hold=null;clearTimeout(holdT);clearInterval(holdI)}
+  update();
   /* tayangan undian hanya diputar bila admin memicunya saat halaman ini terbuka */
   const sid=st.drawShow?st.drawShow.id:0;if(lastShow===null)lastShow=sid;else if(sid&&sid!==lastShow){lastShow=sid;playDraw()}}
 /* jenis perubahan menentukan animasi: 'round' = zoom seluruh layar, 'heat' = zoom kartu sorotan */
-function liveKeys(){const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim),fin=rs[rs.length-1],finished=roundDone(fin);
+function liveKeys(){const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=curLive(sim),fin=rs[rs.length-1],finished=roundDone(fin);
   return{key:finished?'end':lv.ri+'-'+lv.hi,round:finished?'end':rs[lv.ri].sp.short}}
 function update(){
   if(!rendered||!st){render();return}
@@ -452,7 +461,7 @@ function render(){
     $('#nowTxt').textContent=st.stage>=1?'Daftar final · menunggu pengacakan':'Daftar peserta';
     lastRound='';lastLive='';rendered=true;return;
   }
-  const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=E.liveOf(sim);
+  const sim=E.simulate(),rs=sim.rounds.filter(r=>!r.skipped),lv=curLive(sim);
   const fin=rs[rs.length-1],finished=roundDone(fin),lr=rs[lv.ri];
   /* mode tampilan: final dominan, fokus saat 9 besar ke bawah */
   const mode=board?'':finished||lr.sp.kind==='final'?'m-final':lr.n<=9?'m-focus':'';
@@ -473,6 +482,7 @@ function renderNow(rs,lv,finished){
   n.querySelector('b').textContent=board?(prov?'SEMENTARA':st.dday?'HARI H':'UNDIAN'):finished?'SELESAI':'LIVE';
   const rd=rs[lv.ri];
   if(board){$('#nowTxt').textContent=prov?'Pengacakan ke-'+st.draws+' · belum final':st.dday?'Bagan lengkap':'Undian final · pengacakan ke-'+st.draws;return}
+  if(hold&&!finished){$('#nowTxt').innerHTML=esc(rd.sp.label)+' · Hasil heat · lanjut dalam <span id="hold">'+Math.max(0,Math.ceil((hold.until-Date.now())/1000))+'</span> dtk';return}
   $('#nowTxt').textContent=finished?'Juara sudah ditentukan':rd.sp.kind==='final'?'Final':E.heatState(rd,lv.hi)==='tiecut'?rd.sp.label+' · Penentuan lucky loser':rd.sp.label+' · Heat '+(lv.hi+1)+' / '+rd.H;
 }
 function renderSteps(rs,lv,finished){

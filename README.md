@@ -34,6 +34,7 @@ Setiap sesi punya **kode sesi** (6 karakter, tampil di layar peserta dan di admi
 3. **Acak undian**: bisa berkali-kali. Tiap pengacakan diputar di layar peserta; bagan sementara tampil berlabel "belum final".
 4. **Kunci undian final** (ketik kode sesi): susunan heat dan format bracket terkunci. Tautan aturan hilang dari halaman utama. Halaman pertama = bagan lengkap, tidak berganti.
 5. **Mode hari H** (admin, ketik `MULAI`): halaman pertama = heat saat ini + preview heat berikutnya, dengan tab ke **Bagan lengkap**. Bisa dikembalikan ke bagan lengkap.
+   Saat pemenang heat dipilih, layar menahan hasil heat itu **10 detik** lalu lanjut ke heat berikutnya, atau langsung lanjut saat admin menekan **Lanjut ke heat berikutnya**.
 
 Penguncian dijaga di server (`api/state.js` menolak perubahan dengan status 409) dan tidak bisa dibuka dari admin.
 

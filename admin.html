@@ -361,6 +361,7 @@ a.btn{text-decoration:none;color:inherit}
         <button type="button" class="icon-btn" id="livePrev" aria-label="Heat sebelumnya">‹</button>
         <select id="liveSel" aria-label="Heat yang tampil live"></select>
         <button type="button" class="icon-btn" id="liveNext" aria-label="Heat berikutnya">›</button>
+        <button type="button" class="btn primary" id="holdNext" hidden title="Layar peserta menahan hasil heat 10 detik. Tekan untuk lanjut sekarang.">Lanjut ke heat berikutnya ›</button>
         <span class="sep"></span>
         <label class="lbl" for="showScores" style="font-weight:600">Skor di layar</label>
         <select id="showScores">
@@ -555,7 +556,20 @@ function renderLive(sim,rs,lv){
   const sel=$('#liveSel');if(document.activeElement!==sel)sel.innerHTML=opts.join('');
   const ss=$('#showScores');if(document.activeElement!==ss)ss.value=st.showScores;
 }
+function trackDone(sim){
+  const rs=sim.rounds.filter(r=>!r.skipped),cur=[];
+  rs.forEach(rd=>{if(rd.sp.kind==='final')return;rd.heats.forEach((h,hi)=>{if(heatState(rd,hi)==='done')cur.push(rd.sp.short+'-'+hi)})});
+  const prev=Array.isArray(st.doneSet)?st.doneSet:null;
+  if(prev&&prev.length===cur.length&&prev.every(x=>cur.includes(x)))return;
+  const added=prev?cur.filter(x=>!prev.includes(x)):[];
+  st.doneSet=cur;
+  if(added.length&&st.dday){const p=added[added.length-1].split('-');st.fin={k:p[0],h:+p[1],id:Date.now()}}
+  save();
+}
+$('#holdNext').addEventListener('click',()=>{if(st.fin){st.finAck=st.fin.id;save();render();toast('Layar peserta lanjut ke heat berikutnya')}});
 function renderBoard(sim){
+  trackDone(sim);
+  $('#holdNext').hidden=!(st.dday&&st.fin&&st.finAck!==st.fin.id);
   const rs=sim.rounds.filter(r=>!r.skipped),lv=liveOf(sim);
   renderLive(sim,rs,lv);
   const pipe=['<div class="pipe-it"><b>'+sim.N+'</b><span>Peserta</span></div>'];
